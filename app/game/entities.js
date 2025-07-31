@@ -87,6 +87,7 @@ class BadGuy extends Character {
         this.tellDuration = 750; // 0.75 seconds before shooting
         this.timeToFlash = this.nextShotTime - this.tellDuration; // Start flashing before first shot
         this.canvasWidth = canvasWidth;
+        this.hasShotOnScreen = false; // New property to track if the bad guy has shot while on screen
     }
 
     startFlashing() {
@@ -137,11 +138,21 @@ class BadGuy extends Character {
             this.isAlive = false;
         }
 
+        // Check if bad guy is on screen
+        const isOnScreen = this.x + this.width > 0 && this.x < this.canvasWidth;
+
+        // Schedule the first shot if on screen and hasn't shot yet
+        if (isOnScreen && !this.hasShotOnScreen) {
+            this.nextShotTime = Date.now() + (Math.random() * 1000) + 2000; // 2-3 second delay
+            this.timeToFlash = this.nextShotTime - this.tellDuration; // Set time to flash for this scheduled shot
+            this.hasShotOnScreen = true; // Mark that it has shot
+        }
+ 
         // Start flashing if it's time and not already flashing
         if (!this.flashing && this.isAlive && Date.now() >= this.timeToFlash) {
             this.startFlashing();
         }
-
+ 
         // Shooting logic (can shoot even if stopped)
         if (this.isAlive && Date.now() >= this.nextShotTime) {
             this.stopFlashing(); // Ensure flashing stops when shooting

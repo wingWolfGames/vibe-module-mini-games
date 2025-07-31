@@ -109,7 +109,7 @@ const GameCanvas = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const isBadGuy = Math.random() < 0.7; // 70% chance for a bad guy
+        const isBadGuy = Math.random() < 0.8; // 80% chance for a bad guy
         const fromLeft = Math.random() < 0.5; // 50% chance to come from left
         const y = Math.random() * (canvas.height - 50); // Random height, ensure it's within canvas bounds
         const width = 50;
