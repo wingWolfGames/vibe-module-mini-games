@@ -34,11 +34,35 @@ class Character {
         this.height = height;
         this.type = type; // 'bad' or 'good'
         this.isAlive = true;
+        this.hp = 1; // All NPCs start with 1 HP
     }
 
-    isHit(targetX, targetY) {
-        return targetX >= this.x && targetX <= this.x + this.width &&
-               targetY >= this.y && targetY <= this.y + this.height;
+    isHit(targetX, targetY, radius) {
+        // Check for circular collision with a rectangular entity
+        // Find the closest point on the rectangle to the center of the circle
+        let testX = targetX;
+        let testY = targetY;
+
+        if (targetX < this.x) testX = this.x;
+        else if (targetX > this.x + this.width) testX = this.x + this.width;
+
+        if (targetY < this.y) testY = this.y;
+        else if (targetY > this.y + this.height) testY = this.y + this.height;
+
+        // Calculate the distance between the closest point and the circle's center
+        let distX = targetX - testX;
+        let distY = targetY - testY;
+        let distance = Math.sqrt((distX * distX) + (distY * distY));
+
+        // If the distance is less than the circle's radius, there's a collision
+        return distance <= radius;
+    }
+
+    takeDamage(amount) {
+        this.hp -= amount;
+        if (this.hp <= 0) {
+            this.isAlive = false;
+        }
     }
 }
 
@@ -93,6 +117,7 @@ class BadGuy extends Character {
 
         if (Date.now() >= this.shootsAt && this.isAlive) {
             this.stopFlashing(); // Ensure flashing stops when shooting
+            this.shootsAt = Date.now() + (Math.random() * 3000) + 2000; // Reset shoot time
             return true; // Indicate that the bad guy shot
         }
         return false;

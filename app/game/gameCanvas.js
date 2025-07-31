@@ -31,9 +31,11 @@ const GameCanvas = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Update game state
+        gameState.processHitCircles(); // Process hit circles and collisions
+
         gameState.badGuys.forEach(badGuy => {
             if (badGuy.update(timestamp)) {
-                playerRef.current.loseLife();
+                // NPC shoots player, take 1 life away
                 gameState.loseLife();
                 console.log('Player lives:', gameState.playerLives);
             }
@@ -53,6 +55,17 @@ const GameCanvas = () => {
         gameState.goodGuys.forEach(goodGuy => {
             ctx.fillStyle = 'blue';
             ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
+        });
+
+        // Draw hit circles
+        gameState.hitCircles.forEach(circle => {
+            ctx.beginPath();
+            ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)'; // Semi-transparent yellow
+            ctx.fill();
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         });
 
         ctx.restore(); // Restore canvas state to remove shake translation
@@ -112,32 +125,9 @@ const GameCanvas = () => {
                 gameState.shootBullet();
                 console.log('Shot fired! Ammo:', gameState.playerAmmo);
 
-                let hit = false;
-                for (let i = gameState.badGuys.length - 1; i >= 0; i--) {
-                    const badGuy = gameState.badGuys[i];
-                    if (badGuy.isAlive && badGuy.isHit(x, y)) {
-                        badGuy.isAlive = false;
-                        badGuy.stopFlashing();
-                        gameState.addScore(100);
-                        console.log('Hit a bad guy!');
-                        hit = true;
-                        break;
-                    }
-                }
-
-                if (!hit) {
-                    for (let i = gameState.goodGuys.length - 1; i >= 0; i--) {
-                        const goodGuy = gameState.goodGuys[i];
-                        if (goodGuy.isAlive && goodGuy.isHit(x, y)) {
-                            playerRef.current.loseLife();
-                            gameState.loseLife();
-                            console.log('Shot a good guy! Lives:', gameState.playerLives);
-                            goodGuy.isAlive = false;
-                            hit = true;
-                            break;
-                        }
-                    }
-                }
+                // Hit detection is now handled by gameState.processHitCircles
+                // The onShoot callback in inputHandler.js now directly calls gameState.createHitCircle
+                // which will then be processed in the gameLoop by gameState.processHitCircles
             } else {
                 console.log('Out of ammo!');
             }

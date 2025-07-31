@@ -1,3 +1,5 @@
+import gameState from './gameState';
+
 class InputHandler {
     constructor(canvas) {
         this.canvas = canvas;
@@ -43,7 +45,11 @@ class InputHandler {
                 this.clickCount++;
                 if (this.clickCount === 2) {
                     if (this.onShoot) {
-                        this.onShoot(event.clientX, event.clientY);
+                        const rect = this.canvas.getBoundingClientRect();
+                        const x = event.clientX - rect.left;
+                        const y = event.clientY - rect.top;
+                        this.onShoot(x, y);
+                        gameState.createHitCircle(x, y); // Create hit circle on shoot
                     }
                     this.clickCount = 0; // Reset for next double tap
                 }
@@ -84,7 +90,11 @@ class InputHandler {
                 if (this.clickCount === 2) {
                     if (this.onShoot) {
                         const touch = event.changedTouches[0];
-                        this.onShoot(touch.clientX, touch.clientY);
+                        const rect = this.canvas.getBoundingClientRect();
+                        const x = touch.clientX - rect.left;
+                        const y = touch.clientY - rect.top;
+                        this.onShoot(x, y);
+                        gameState.createHitCircle(x, y); // Create hit circle on shoot
                     }
                     this.clickCount = 0; // Reset for next double tap
                 }

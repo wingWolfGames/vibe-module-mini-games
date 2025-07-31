@@ -7,6 +7,7 @@ class GameState {
         this.gameStarted = false;
         this.badGuys = [];
         this.goodGuys = [];
+        this.hitCircles = []; // New property for hit circles
         this.isPlayerHit = false; // New property for hit feedback
     }
 
@@ -18,6 +19,7 @@ class GameState {
         this.gameStarted = false;
         this.badGuys = [];
         this.goodGuys = [];
+        this.hitCircles = []; // Reset hit circles on game reset
         this.isPlayerHit = false;
     }
 
@@ -62,6 +64,43 @@ class GameState {
 
     removeGoodGuy(goodGuy) {
         this.goodGuys = this.goodGuys.filter(gg => gg !== goodGuy);
+    }
+    createHitCircle(x, y, radius = 50) {
+        this.hitCircles.push({ x, y, radius, creationTime: Date.now() });
+    }
+
+    processHitCircles() {
+        const HIT_CIRCLE_DURATION = 100; // milliseconds
+        const currentTime = Date.now();
+
+        // Filter out expired hit circles
+        this.hitCircles = this.hitCircles.filter(circle => currentTime - circle.creationTime < HIT_CIRCLE_DURATION);
+
+        this.hitCircles.forEach(circle => {
+            // Check collision with bad guys
+            this.badGuys.forEach(badGuy => {
+                if (badGuy.isAlive && badGuy.isHit(circle.x, circle.y, circle.radius)) {
+                    badGuy.takeDamage(1);
+                    if (!badGuy.isAlive) {
+                        this.addScore(100); // Score for hitting a bad guy
+                    }
+                }
+            });
+
+            // Check collision with good guys
+            this.goodGuys.forEach(goodGuy => {
+                if (goodGuy.isAlive && goodGuy.isHit(circle.x, circle.y, circle.radius)) {
+                    goodGuy.takeDamage(1);
+                    if (!goodGuy.isAlive) {
+                        this.loseLife(); // Lose life for hitting a good guy
+                    }
+                }
+            });
+        });
+
+        // Remove dead bad guys and good guys
+        this.badGuys = this.badGuys.filter(bg => bg.isAlive);
+        this.goodGuys = this.goodGuys.filter(gg => gg.isAlive);
     }
 }
 
