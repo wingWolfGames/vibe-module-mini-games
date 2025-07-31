@@ -9,6 +9,7 @@ const GameCanvas = () => {
     const inputHandlerRef = useRef(null);
     const playerRef = useRef(new Player());
     const animationFrameId = useRef(null);
+    const spawnIntervalId = useRef(null); // New ref for spawn interval
 
     const gameLoop = useCallback((timestamp) => {
         const canvas = canvasRef.current;
@@ -97,12 +98,7 @@ const GameCanvas = () => {
 
         ctx.restore(); // Restore canvas state to remove shake translation
 
-        if (gameState.gameOver) {
-            ctx.fillStyle = 'black';
-            ctx.font = '40px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
-        } else {
+        if (!gameState.gameOver) {
             animationFrameId.current = requestAnimationFrame(gameLoop);
         }
     }, []);
@@ -148,13 +144,24 @@ const GameCanvas = () => {
         if (animationFrameId.current) {
             cancelAnimationFrame(animationFrameId.current);
         }
+        if (spawnIntervalId.current) { // Clear existing spawn interval
+            clearInterval(spawnIntervalId.current);
+        }
         animationFrameId.current = requestAnimationFrame(gameLoop);
-
-    }, [gameLoop, Player]); // Add Player to dependencies
+        gameState.gameStarted = true; // Ensure gameStarted is true after restart
+        spawnIntervalId.current = setInterval(spawnRandomNPC, 2000); // Re-start spawn interval
+    }, [gameLoop, spawnRandomNPC]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
+
+        const container = canvas.parentElement; // Get the parent container
+        if (container) {
+            container.style.width = window.innerWidth > 600 ? '400px' : '90%';
+            container.style.height = `${window.innerHeight * 0.8}px`;
+            container.style.position = 'relative'; // Ensure container is positioned for absolute children
+        }
 
         canvas.width = window.innerWidth > 600 ? 400 : window.innerWidth * 0.9;
         canvas.height = window.innerHeight * 0.8;
@@ -192,13 +199,15 @@ const GameCanvas = () => {
         gameState.gameStarted = true;
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
-        const spawnInterval = setInterval(spawnRandomNPC, 2000); // Spawn every 2 seconds
+        spawnIntervalId.current = setInterval(spawnRandomNPC, 2000); // Assign to ref
 
         return () => {
             if (animationFrameId.current) {
                 cancelAnimationFrame(animationFrameId.current);
             }
-            clearInterval(spawnInterval); // Clear the interval on unmount
+            if (spawnIntervalId.current) { // Clear the interval on unmount
+                clearInterval(spawnIntervalId.current);
+            }
             if (inputHandlerRef.current) {
                 const ih = inputHandlerRef.current;
                 ih.canvas.removeEventListener('mousedown', ih.handleMouseDown);
@@ -214,10 +223,10 @@ const GameCanvas = () => {
     }, [gameLoop]);
 
     return (
-        <>
-            <canvas ref={canvasRef} style={{ border: '1px solid black', display: 'block', margin: 'auto' }}></canvas>
+        <div style={{ border: '1px solid black', margin: 'auto', position: 'relative' }}>
+            <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }}></canvas>
             <GameUI onRestart={handleRestart} />
-        </>
+        </div>
     );
 };
 

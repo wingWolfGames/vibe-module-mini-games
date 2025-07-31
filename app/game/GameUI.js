@@ -29,7 +29,7 @@ const GameUI = ({ onRestart }) => {
     }, []);
 
     return (
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
             <div style={{
                 position: 'absolute',
                 top: '10px',
@@ -111,19 +111,20 @@ const GameUI = ({ onRestart }) => {
             {gameOver && (
                 <div style={{
                     position: 'absolute',
-                    top: '25%',
+                    top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
                     textAlign: 'center',
                     zIndex: 101,
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
                     padding: '20px',
-                    borderRadius: '10px'
+                    borderRadius: '10px',
+                    color: 'white' // Added color for GAME OVER text
                 }}>
+                    <p style={{ margin: '0 0 15px 0', fontSize: '2em', fontWeight: 'bold' }}>GAME OVER</p>
                     <button
                         onClick={onRestart}
                         style={{
-                            marginTop: '15px', /* Added margin-top to push it down from GAME OVER */
                             padding: '10px 20px',
                             fontSize: '1.2em',
                             cursor: 'pointer'
