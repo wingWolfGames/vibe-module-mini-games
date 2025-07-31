@@ -73,7 +73,6 @@ const GameCanvas = () => {
             ctx.translate(shakeX, shakeY);
 
             gameState.processHitCircles();
-            gameState.processBadGuyShotEffects();
 
             gameState.badGuys.forEach(badGuy => {
                 const shotResult = badGuy.update(performance.now());
@@ -97,13 +96,14 @@ const GameCanvas = () => {
             });
 
             gameState.badGuyShotEffects.forEach(effect => {
-                const elapsed = (performance.now() - effect.creationTime) + 16;
+                const elapsed = (performance.now() - effect.creationTime); // Removed + 16
                 const progress = elapsed / effect.duration;
                 const maxRadius = Math.max(canvas.width, canvas.height);
                 const currentRadius = Math.max(0, maxRadius * progress);
                 const opacity = Math.max(0, 1 - progress);
 
                 if (progress >= 1 && !effect.damageApplied) {
+                    console.log("GameCanvas: Applying damage from bad guy shot effect.");
                     gameState.loseLife(true);
                     effect.damageApplied = true;
                 }
@@ -138,6 +138,8 @@ const GameCanvas = () => {
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
     }, [gameStarted]);
+
+    gameState.processBadGuyShotEffects(); // Moved here to ensure damage is applied before filtering
 
     const spawnRandomNPC = useCallback(() => {
         const canvas = canvasRef.current;
@@ -219,14 +221,14 @@ const GameCanvas = () => {
 
         inputHandlerRef.current = new InputHandler(canvas);
         inputHandlerRef.current.onShoot = (x, y) => {
-            if (gameState.gameOver || !gameState.gameStarted) return;
+            // Removed redundant check, InputHandler class handles active state
             if (playerRef.current.shoot()) {
                 gameState.shootBullet();
                 gameState.createHitCircle(x, y);
             }
         };
         inputHandlerRef.current.onReload = () => {
-            if (gameState.gameOver || !gameState.gameStarted) return;
+            // Removed redundant check, InputHandler class handles active state
             if (playerRef.current.ammo < 6 && !playerRef.current.reloading) {
                 playerRef.current.reloading = true;
                 if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current);

@@ -29,14 +29,14 @@ class InputHandler {
     }
 
     handleMouseDown(event) {
-        if (gameState.isTitleScreen || gameState.gameOver) return; // Ignore input on title screen or game over
+        if (gameState.currentScreen !== 'PLAYING' || gameState.gameOver) return; // Ignore input if not playing or game over
         this.isMouseDown = true;
         this.mouseDownTime = Date.now();
         this.swipeStartY = event.clientY;
     }
 
     handleMouseUp(event) {
-        if (gameState.isTitleScreen || gameState.gameOver) return; // Ignore input on title screen or game over
+        if (gameState.currentScreen !== 'PLAYING' || gameState.gameOver) return; // Ignore input if not playing or game over
         this.isMouseDown = false;
         const clickDuration = Date.now() - this.mouseDownTime;
 
@@ -51,7 +51,6 @@ class InputHandler {
                         const x = event.clientX - rect.left;
                         const y = event.clientY - rect.top;
                         this.onShoot(x, y);
-                        gameState.createHitCircle(x, y); // Create hit circle on shoot
                     }
                     this.clickCount = 0; // Reset for next double tap
                 }
@@ -75,7 +74,7 @@ class InputHandler {
     }
 
     handleTouchStart(event) {
-        if (gameState.isTitleScreen || gameState.gameOver) return; // Ignore input on title screen or game over
+        if (gameState.currentScreen !== 'PLAYING' || gameState.gameOver) return; // Ignore input if not playing or game over
         if (event.touches.length === 1) {
             this.isMouseDown = true; // Simulate mouse down for touch
             this.mouseDownTime = Date.now();
@@ -84,7 +83,7 @@ class InputHandler {
     }
 
     handleTouchEnd(event) {
-        if (gameState.isTitleScreen || gameState.gameOver) return; // Ignore input on title screen or game over
+        if (gameState.currentScreen !== 'PLAYING' || gameState.gameOver) return; // Ignore input if not playing or game over
         this.isMouseDown = false; // Simulate mouse up for touch
         const clickDuration = Date.now() - this.mouseDownTime;
 
@@ -100,7 +99,6 @@ class InputHandler {
                         const x = touch.clientX - rect.left;
                         const y = touch.clientY - rect.top;
                         this.onShoot(x, y);
-                        gameState.createHitCircle(x, y); // Create hit circle on shoot
                     }
                     this.clickCount = 0; // Reset for next double tap
                 }

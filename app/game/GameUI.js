@@ -23,7 +23,7 @@ const GameUI = ({
             left: 0,
             width: '100%',
             height: '100%',
-            // Removed pointerEvents: gameOver ? 'auto' : 'none' to allow clicks on title/intro screens
+            pointerEvents: (currentScreen === 'TITLE' || currentScreen === 'INTRO' || gameOver) ? 'auto' : 'none'
         }}>
             <div style={{
                 position: 'absolute',
