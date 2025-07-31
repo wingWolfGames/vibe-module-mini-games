@@ -15,6 +15,7 @@ class GameState {
         this.badGuyShotEffects = []; // New property for bad guy shooting effects
         this.showReloadOk = false; // New property for reload success feedback
         this.isReloadShaking = false; // New property for reload shake feedback
+        this.isHitByBadGuy = false; // New property for bad guy hit feedback
         this.playerHitTimeoutId = null; // To store timeout ID for player hit feedback
         this.reloadOkTimeoutId = null; // To store timeout ID for reload feedback
     }
@@ -31,23 +32,26 @@ class GameState {
         this.goodGuys = [];
         this.hitCircles = []; // Reset hit circles on game reset
         this.isPlayerHit = false;
+        this.isHitByBadGuy = false;
         this.badGuyShotEffects = []; // Reset bad guy shot effects on game reset
         this.showReloadOk = false; // Reset reload success feedback on game reset
         this.isReloadShaking = false; // Reset reload shake feedback on game reset
         this.clearTimeouts(); // Clear any pending timeouts on reset
     }
 
-    loseLife() {
+    loseLife(isBadGuyAttack = false) {
         this.playerLives--;
-        this.isPlayerHit = true; // Set to true when player is hit
-        if (this.playerHitTimeoutId) clearTimeout(this.playerHitTimeoutId); // Clear previous timeout
+        this.isPlayerHit = true;
+        this.isHitByBadGuy = isBadGuyAttack;
+        if (this.playerHitTimeoutId) clearTimeout(this.playerHitTimeoutId);
         this.playerHitTimeoutId = setTimeout(() => {
-            this.isPlayerHit = false; // Reset after a short duration
+            this.isPlayerHit = false;
+            this.isHitByBadGuy = false;
             this.playerHitTimeoutId = null;
-        }, 200); // Flash/shake duration
+        }, 200);
         if (this.playerLives <= 0) {
             this.gameOver = true;
-            this.clearTimeouts(); // Clear all timeouts when game is over
+            this.clearTimeouts();
         }
     }
 
@@ -142,13 +146,14 @@ class GameState {
         this.badGuyShotEffects.push({
             x,
             y,
-            creationTime: Date.now(),
-            duration: DURATION
+            creationTime: performance.now(),
+            duration: DURATION,
+            damageApplied: false
         });
     }
 
     processBadGuyShotEffects() {
-        const currentTime = Date.now();
+        const currentTime = performance.now();
         this.badGuyShotEffects = this.badGuyShotEffects.filter(effect => {
             return currentTime - effect.creationTime < effect.duration;
         });

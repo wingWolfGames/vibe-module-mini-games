@@ -60,11 +60,10 @@ const GameCanvas = () => {
         try {
             let shakeX = 0;
             let shakeY = 0;
+
             if (gameState.isPlayerHit) {
                 shakeX = (Math.random() - 0.5) * 10;
                 shakeY = (Math.random() - 0.5) * 10;
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
             } else if (gameState.isReloadShaking) {
                 shakeY = (Math.random() - 0.5) * 5;
             }
@@ -78,7 +77,6 @@ const GameCanvas = () => {
             gameState.badGuys.forEach(badGuy => {
                 const shotResult = badGuy.update(performance.now());
                 if (shotResult && shotResult.shot && !gameState.gameOver) {
-                    gameState.loseLife();
                     gameState.createBadGuyShotEffect(shotResult.x, shotResult.y);
                 }
             });
@@ -98,11 +96,17 @@ const GameCanvas = () => {
             });
 
             gameState.badGuyShotEffects.forEach(effect => {
-                const elapsed = performance.now() - effect.creationTime;
+                const elapsed = (performance.now() - effect.creationTime) + 16;
                 const progress = elapsed / effect.duration;
-                const maxRadius = Math.max(canvas.width, canvas.height) * 1.2;
+                const maxRadius = Math.max(canvas.width, canvas.height);
                 const currentRadius = Math.max(0, maxRadius * progress);
                 const opacity = Math.max(0, 1 - progress);
+
+                if (progress >= 1 && !effect.damageApplied) {
+                    gameState.loseLife(true);
+                    effect.damageApplied = true;
+                }
+
                 ctx.beginPath();
                 ctx.arc(effect.x, effect.y, currentRadius, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`;
@@ -118,6 +122,12 @@ const GameCanvas = () => {
                 ctx.lineWidth = 2;
                 ctx.stroke();
             });
+
+            // Draw the full-screen red flash after all other elements
+            if (gameState.isPlayerHit && !gameState.isHitByBadGuy) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
             ctx.restore();
         } catch (error) {
