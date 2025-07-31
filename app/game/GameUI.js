@@ -88,7 +88,7 @@ const GameUI = ({ onRestart }) => {
                     animation: 'flash 1s infinite',
                     WebkitAnimation: 'flash 1s infinite'
                 }}>
-                    RELOAD
+                    RELOAD<br/><span style={{ fontSize: '0.5em' }}>(swipe up!)</span>
                 </div>
             )}
 
