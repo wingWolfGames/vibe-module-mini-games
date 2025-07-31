@@ -64,7 +64,9 @@ class InputHandler {
         if (this.isMouseDown && this.onReload) {
             const swipeDistance = this.swipeStartY - event.clientY;
             if (swipeDistance > this.reloadThreshold) {
-                this.onReload();
+                if (gameState.reloadAmmo()) { // Call reloadAmmo and check if successful
+                    this.onReload(); // Only call onReload if reload was successful
+                }
                 this.isMouseDown = false; // Prevent continuous reloading
             }
         }
@@ -109,7 +111,9 @@ class InputHandler {
         if (this.isMouseDown && event.touches.length === 1 && this.onReload) {
             const swipeDistance = this.swipeStartY - event.touches[0].clientY;
             if (swipeDistance > this.reloadThreshold) {
-                this.onReload();
+                if (gameState.reloadAmmo()) { // Call reloadAmmo and check if successful
+                    this.onReload(); // Only call onReload if reload was successful
+                }
                 this.isMouseDown = false; // Prevent continuous reloading
             }
         }

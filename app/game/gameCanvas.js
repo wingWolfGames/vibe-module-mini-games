@@ -22,6 +22,8 @@ const GameCanvas = () => {
             shakeY = (Math.random() - 0.5) * 10;
             ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red flash
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (gameState.isReloadShaking) {
+            shakeY = (Math.random() - 0.5) * 5; // Subtle vertical shake for reload
         }
 
         ctx.save(); // Save the current canvas state

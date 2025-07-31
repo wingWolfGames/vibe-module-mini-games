@@ -6,6 +6,8 @@ const GameUI = ({ onRestart }) => {
     const [ammo, setAmmo] = useState(gameState.playerAmmo);
     const [score, setScore] = useState(gameState.score);
     const [gameOver, setGameOver] = useState(gameState.gameOver);
+    const [showReloadOk, setShowReloadOk] = useState(gameState.showReloadOk);
+    const [isFlashingReload, setIsFlashingReload] = useState(false);
 
     useEffect(() => {
         const updateUI = () => {
@@ -13,6 +15,12 @@ const GameUI = ({ onRestart }) => {
             setAmmo(gameState.playerAmmo);
             setScore(gameState.score);
             setGameOver(gameState.gameOver);
+            setShowReloadOk(gameState.showReloadOk);
+            if (gameState.playerAmmo === 0 && !isFlashingReload) {
+                setIsFlashingReload(true);
+            } else if (gameState.playerAmmo > 0 && isFlashingReload) {
+                setIsFlashingReload(false);
+            }
         };
 
         const interval = setInterval(updateUI, 100);
@@ -59,6 +67,46 @@ const GameUI = ({ onRestart }) => {
             }}>
                 <p style={{ margin: '0', fontSize: '1em' }}>Ammo: {ammo}</p>
             </div>
+
+            {isFlashingReload && ammo === 0 && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    zIndex: 101,
+                    fontSize: '3em',
+                    color: 'red',
+                    animation: 'flash 1s infinite',
+                    WebkitAnimation: 'flash 1s infinite'
+                }}>
+                    RELOAD
+                </div>
+            )}
+
+            {showReloadOk && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    zIndex: 101,
+                    fontSize: '3em',
+                    color: 'blue'
+                }}>
+                    RELOAD<br/>OK
+                </div>
+            )}
+
+            <style>{`
+                @keyframes flash {
+                    0% { opacity: 1; }
+                    50% { opacity: 0; }
+                    100% { opacity: 1; }
+                }
+            `}</style>
 
             {gameOver && (
                 <div style={{

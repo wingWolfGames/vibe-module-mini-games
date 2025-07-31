@@ -10,6 +10,8 @@ class GameState {
         this.hitCircles = []; // New property for hit circles
         this.isPlayerHit = false; // New property for hit feedback
         this.badGuyShotEffects = []; // New property for bad guy shooting effects
+        this.showReloadOk = false; // New property for reload success feedback
+        this.isReloadShaking = false; // New property for reload shake feedback
     }
 
     reset() {
@@ -23,6 +25,8 @@ class GameState {
         this.hitCircles = []; // Reset hit circles on game reset
         this.isPlayerHit = false;
         this.badGuyShotEffects = []; // Reset bad guy shot effects on game reset
+        this.showReloadOk = false; // Reset reload success feedback on game reset
+        this.isReloadShaking = false; // Reset reload shake feedback on game reset
     }
 
     loseLife() {
@@ -45,7 +49,17 @@ class GameState {
     }
 
     reloadAmmo() {
-        this.playerAmmo = 6;
+        if (this.playerAmmo < 6) {
+            this.playerAmmo = 6;
+            this.showReloadOk = true;
+            this.isReloadShaking = true;
+            setTimeout(() => {
+                this.showReloadOk = false;
+                this.isReloadShaking = false;
+            }, 500); // Display for 0.5 seconds and shake duration
+            return true;
+        }
+        return false;
     }
 
     addScore(points) {
@@ -67,7 +81,7 @@ class GameState {
     removeGoodGuy(goodGuy) {
         this.goodGuys = this.goodGuys.filter(gg => gg !== goodGuy);
     }
-    createHitCircle(x, y, radius = 50) {
+    createHitCircle(x, y, radius = 25) {
         this.hitCircles.push({ x, y, radius, creationTime: Date.now() });
     }
 
