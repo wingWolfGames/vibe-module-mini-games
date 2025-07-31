@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import InputHandler from './inputHandler';
 import gameState from './gameState';
 import { Player, BadGuy, GoodGuy } from './entities';
@@ -10,6 +10,7 @@ const GameCanvas = () => {
     const playerRef = useRef(new Player());
     const animationFrameId = useRef(null);
     const spawnIntervalId = useRef(null); // New ref for spawn interval
+    const [localShowDoubleTapToShoot, setLocalShowDoubleTapToShoot] = useState(gameState.showDoubleTapToShoot);
 
     const gameLoop = useCallback((timestamp) => {
         const canvas = canvasRef.current;
@@ -149,7 +150,7 @@ const GameCanvas = () => {
         }
         animationFrameId.current = requestAnimationFrame(gameLoop);
         gameState.gameStarted = true; // Ensure gameStarted is true after restart
-        spawnIntervalId.current = setInterval(spawnRandomNPC, 2000); // Re-start spawn interval
+        // Do not start spawn interval immediately on restart
     }, [gameLoop, spawnRandomNPC]);
 
     useEffect(() => {
@@ -199,7 +200,7 @@ const GameCanvas = () => {
         gameState.gameStarted = true;
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
-        spawnIntervalId.current = setInterval(spawnRandomNPC, 2000); // Assign to ref
+        // Do not start spawn interval immediately
 
         return () => {
             if (animationFrameId.current) {
@@ -220,7 +221,21 @@ const GameCanvas = () => {
             // Reset playerRef when component unmounts or game restarts
             playerRef.current = new Player();
         };
-    }, [gameLoop]);
+    }, [gameLoop, spawnRandomNPC]);
+
+    useEffect(() => {
+        const updateLocalState = () => {
+            setLocalShowDoubleTapToShoot(gameState.showDoubleTapToShoot);
+        };
+        const interval = setInterval(updateLocalState, 100);
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        if (!localShowDoubleTapToShoot && !spawnIntervalId.current) {
+            spawnIntervalId.current = setInterval(spawnRandomNPC, 2000);
+        }
+    }, [localShowDoubleTapToShoot, spawnRandomNPC]);
 
     return (
         <div style={{ border: '1px solid black', margin: 'auto', position: 'relative' }}>

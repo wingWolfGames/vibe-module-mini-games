@@ -8,6 +8,7 @@ const GameUI = ({ onRestart }) => {
     const [gameOver, setGameOver] = useState(gameState.gameOver);
     const [showReloadOk, setShowReloadOk] = useState(gameState.showReloadOk);
     const [isFlashingReload, setIsFlashingReload] = useState(false);
+    const [showDoubleTapToShoot, setShowDoubleTapToShoot] = useState(gameState.showDoubleTapToShoot);
 
     useEffect(() => {
         const updateUI = () => {
@@ -16,6 +17,7 @@ const GameUI = ({ onRestart }) => {
             setScore(gameState.score);
             setGameOver(gameState.gameOver);
             setShowReloadOk(gameState.showReloadOk);
+            setShowDoubleTapToShoot(gameState.showDoubleTapToShoot);
             if (gameState.playerAmmo === 0 && !isFlashingReload) {
                 setIsFlashingReload(true);
             } else if (gameState.playerAmmo > 0 && isFlashingReload) {
@@ -114,6 +116,23 @@ const GameUI = ({ onRestart }) => {
                     100% { opacity: 1; }
                 }
             `}</style>
+
+            {showDoubleTapToShoot && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    zIndex: 101,
+                    fontSize: '3em',
+                    color: 'red',
+                    animation: 'flash 1s infinite',
+                    WebkitAnimation: 'flash 1s infinite'
+                }}>
+                    Double tap to Shoot!
+                </div>
+            )}
 
             {gameOver && (
                 <div style={{

@@ -5,6 +5,7 @@ class GameState {
         this.score = 0;
         this.gameOver = false;
         this.gameStarted = false;
+        this.showDoubleTapToShoot = true; // New property for the initial instruction
         this.badGuys = [];
         this.goodGuys = [];
         this.hitCircles = []; // New property for hit circles
@@ -20,6 +21,7 @@ class GameState {
         this.score = 0;
         this.gameOver = false;
         this.gameStarted = false;
+        this.showDoubleTapToShoot = true; // Reset on game reset
         this.badGuys = [];
         this.goodGuys = [];
         this.hitCircles = []; // Reset hit circles on game reset
@@ -43,6 +45,9 @@ class GameState {
     shootBullet() {
         if (this.playerAmmo > 0) {
             this.playerAmmo--;
+            if (this.showDoubleTapToShoot) { // If it's the first shot
+                this.showDoubleTapToShoot = false; // Hide the instruction
+            }
             return true;
         }
         return false;
