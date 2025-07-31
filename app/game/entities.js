@@ -27,7 +27,7 @@ class Player {
 }
 
 class Character {
-    constructor(x, y, width, height, type) {
+    constructor(x, y, width, height, type, direction = 1) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -35,6 +35,13 @@ class Character {
         this.type = type; // 'bad' or 'good'
         this.isAlive = true;
         this.hp = 1; // All NPCs start with 1 HP
+        this.direction = direction;
+        this.speed = (Math.random() * 1.5) + 1; // Random speed between 1 and 2.5
+        this.isStopped = false;
+        this.stopTime = 0;
+        this.resumeTime = 0;
+        this.stopDuration = (Math.random() * 1000) + 1000; // Random stop duration between 1-2 seconds
+        this.canStop = Math.random() < 0.3; // 30% chance to have stop-and-go behavior
     }
 
     isHit(targetX, targetY, radius) {
@@ -67,17 +74,18 @@ class Character {
 }
 
 class BadGuy extends Character {
-    constructor(x, y, width, height, canvasWidth) {
-        super(x, y, width, height, 'bad');
-        this.shootsAt = Date.now() + (Math.random() * 3000) + 2000; // Random time between 2-5 seconds
+    constructor(x, y, width, height, canvasWidth, direction) {
+        super(x, y, width, height, 'bad', direction);
+        this.lastShotTime = 0;
+        this.reloadTime = (Math.random() * 2000) + 1000; // Random reload time between 1-3 seconds
+        this.nextShotTime = Date.now() + (Math.random() * 3000) + 2000; // Initial random shot time
         this.flashing = false;
         this.flashInterval = null;
         this.flashCount = 0;
         this.maxFlashes = 6; // Flash 3 times (on/off = 2 states per flash)
         this.flashDuration = 100; // How long each flash state lasts (ms)
-        this.timeToFlash = this.shootsAt - (this.maxFlashes * this.flashDuration); // Start flashing before shooting
-        this.speed = 2; // Pixels per frame
-        this.direction = 1; // 1 for right, -1 for left
+        this.tellDuration = 750; // 0.75 seconds before shooting
+        this.timeToFlash = this.nextShotTime - this.tellDuration; // Start flashing before first shot
         this.canvasWidth = canvasWidth;
     }
 
@@ -102,22 +110,46 @@ class BadGuy extends Character {
     }
 
     update(deltaTime) {
-        // Movement logic
-        this.x += this.speed * this.direction;
+        if (this.canStop) {
+            if (!this.isStopped && Math.random() < 0.005) { // Small chance to stop each frame
+                this.isStopped = true;
+                this.stopTime = Date.now();
+                this.resumeTime = this.stopTime + this.stopDuration;
+            }
 
-        // Bounce off edges
-        if (this.x + this.width > this.canvasWidth || this.x < 0) {
-            this.direction *= -1; // Reverse direction
+            if (this.isStopped && Date.now() >= this.resumeTime) {
+                this.isStopped = false;
+                this.stopTime = 0;
+                this.resumeTime = 0;
+                this.stopDuration = (Math.random() * 1000) + 1000; // Reset for next stop
+            }
         }
 
-        // Start flashing if it's time
-        if (!this.flashing && Date.now() >= this.timeToFlash && this.isAlive) {
+        // Movement logic
+        if (!this.isStopped) {
+            this.x += this.speed * this.direction;
+        }
+
+        // Mark as not alive if off-screen
+        if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
+            this.isAlive = false;
+        } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
+            this.isAlive = false;
+        }
+
+        // Start flashing if it's time and not already flashing
+        if (!this.flashing && this.isAlive && Date.now() >= this.timeToFlash) {
             this.startFlashing();
         }
 
-        if (Date.now() >= this.shootsAt && this.isAlive) {
+        // Shooting logic (can shoot even if stopped)
+        if (this.isAlive && Date.now() >= this.nextShotTime) {
             this.stopFlashing(); // Ensure flashing stops when shooting
-            this.shootsAt = Date.now() + (Math.random() * 3000) + 2000; // Reset shoot time
+            this.lastShotTime = Date.now();
+            this.reloadTime = (Math.random() * 2000) + 1000; // Randomize reload time for next shot
+            this.nextShotTime = Date.now() + this.reloadTime; // Set next shot time
+            this.timeToFlash = this.nextShotTime - this.tellDuration; // Set time to flash for next shot
+            this.startFlashing(); // Start flashing for the next shot
             return true; // Indicate that the bad guy shot
         }
         return false;
@@ -125,8 +157,38 @@ class BadGuy extends Character {
 }
 
 class GoodGuy extends Character {
-    constructor(x, y, width, height) {
-        super(x, y, width, height, 'good');
+    constructor(x, y, width, height, direction) {
+        super(x, y, width, height, 'good', direction);
+    }
+
+    update(deltaTime) {
+        if (this.canStop) {
+            if (!this.isStopped && Math.random() < 0.005) { // Small chance to stop each frame
+                this.isStopped = true;
+                this.stopTime = Date.now();
+                this.resumeTime = this.stopTime + this.stopDuration;
+            }
+
+            if (this.isStopped && Date.now() >= this.resumeTime) {
+                this.isStopped = false;
+                this.stopTime = 0;
+                this.resumeTime = 0;
+                this.stopDuration = (Math.random() * 1000) + 1000; // Reset for next stop
+            }
+        }
+
+        // Movement logic
+        if (!this.isStopped) {
+            this.x += this.speed * this.direction;
+        }
+
+        // Mark as not alive if off-screen
+        if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
+            this.isAlive = false;
+        } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
+            this.isAlive = false;
+        }
+        return false; // Good guys don't shoot
     }
 }
 

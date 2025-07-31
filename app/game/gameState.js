@@ -82,7 +82,7 @@ class GameState {
                 if (badGuy.isAlive && badGuy.isHit(circle.x, circle.y, circle.radius)) {
                     badGuy.takeDamage(1);
                     if (!badGuy.isAlive) {
-                        this.addScore(100); // Score for hitting a bad guy
+                        this.addScore(10); // Score for hitting a bad guy
                     }
                 }
             });

@@ -41,6 +41,14 @@ const GameCanvas = () => {
             }
         });
 
+        gameState.goodGuys.forEach(goodGuy => {
+            goodGuy.update(timestamp); // Update good guy movement
+        });
+
+        gameState.goodGuys.forEach(goodGuy => {
+            goodGuy.update(timestamp); // Update good guy movement
+        });
+
         // Remove dead bad guys (if any)
         gameState.badGuys = gameState.badGuys.filter(bg => bg.isAlive);
         gameState.goodGuys = gameState.goodGuys.filter(gg => gg.isAlive); // Also remove dead good guys
@@ -80,6 +88,37 @@ const GameCanvas = () => {
         }
     }, []);
 
+    const spawnRandomNPC = useCallback(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const isBadGuy = Math.random() < 0.7; // 70% chance for a bad guy
+        const fromLeft = Math.random() < 0.5; // 50% chance to come from left
+        const y = Math.random() * (canvas.height - 50); // Random height, ensure it's within canvas bounds
+        const width = 50;
+        const height = 50;
+
+        let x;
+        let direction;
+
+        if (fromLeft) {
+            x = -width; // Start off-screen to the left
+            direction = 1; // Move right
+        } else {
+            x = canvas.width; // Start off-screen to the right
+            direction = -1; // Move left
+        }
+
+        if (isBadGuy) {
+            const badGuy = new BadGuy(x, y, width, height, canvas.width, direction);
+            gameState.addBadGuy(badGuy);
+        } else {
+            const goodGuy = new GoodGuy(x, y, width, height, direction);
+            goodGuy.canvasWidth = canvas.width; // GoodGuy also needs canvasWidth for off-screen check
+            gameState.addGoodGuy(goodGuy);
+        }
+    }, []);
+
     const handleRestart = useCallback(() => {
         gameState.reset();
         playerRef.current = new Player(); // Re-initialize player
@@ -92,21 +131,6 @@ const GameCanvas = () => {
         }
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
-        // Re-spawn initial entities for testing
-        const canvas = canvasRef.current;
-        if (canvas) {
-            setTimeout(() => {
-                const badGuy = new BadGuy(canvas.width / 4, canvas.height / 4, 50, 50, canvas.width);
-                gameState.addBadGuy(badGuy);
-                console.log('Bad guy spawned after restart!');
-            }, 1000); // Shorter delay for restart testing
-
-            setTimeout(() => {
-                const goodGuy = new GoodGuy(canvas.width * 3 / 4, canvas.height / 4, 50, 50);
-                gameState.addGoodGuy(goodGuy);
-                console.log('Good guy spawned after restart!');
-            }, 2000);
-        }
     }, [gameLoop, Player]); // Add Player to dependencies
 
     useEffect(() => {
@@ -149,24 +173,13 @@ const GameCanvas = () => {
         gameState.gameStarted = true;
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
-        setTimeout(() => {
-            const badGuy = new BadGuy(canvas.width / 4, canvas.height / 4, 50, 50, canvas.width);
-            gameState.addBadGuy(badGuy);
-            // badGuy.startFlashing(); // Flashing is now handled by update method based on timeToFlash
-            console.log('Bad guy spawned!');
-        }, 3000);
-
-        setTimeout(() => {
-            const goodGuy = new GoodGuy(canvas.width * 3 / 4, canvas.height / 4, 50, 50);
-            gameState.addGoodGuy(goodGuy);
-            console.log('Good guy spawned!');
-        }, 5000);
-
+        const spawnInterval = setInterval(spawnRandomNPC, 2000); // Spawn every 2 seconds
 
         return () => {
             if (animationFrameId.current) {
                 cancelAnimationFrame(animationFrameId.current);
             }
+            clearInterval(spawnInterval); // Clear the interval on unmount
             if (inputHandlerRef.current) {
                 const ih = inputHandlerRef.current;
                 ih.canvas.removeEventListener('mousedown', ih.handleMouseDown);
