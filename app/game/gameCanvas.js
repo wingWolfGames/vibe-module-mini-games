@@ -2,67 +2,72 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import InputHandler from './inputHandler';
 import gameState from './gameState';
 import { Player, BadGuy, GoodGuy } from './entities';
-import GameUI from './GameUI'; // Import GameUI
+import GameUI from './GameUI';
+import TitleScreen from '../../components/TitleScreen';
 
 const GameCanvas = () => {
     const canvasRef = useRef(null);
     const inputHandlerRef = useRef(null);
     const playerRef = useRef(new Player());
     const animationFrameId = useRef(null);
-    const spawnIntervalId = useRef(null); // New ref for spawn interval
-    const [localShowDoubleTapToShoot, setLocalShowDoubleTapToShoot] = useState(gameState.showDoubleTapToShoot);
+    const spawnIntervalId = useRef(null);
 
-    const gameLoop = useCallback((timestamp) => {
+    // Centralized UI State
+    const [isTitleScreen, setIsTitleScreen] = useState(true);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [gameOver, setGameOver] = useState(false);
+    const [lives, setLives] = useState(gameState.playerLives);
+    const [ammo, setAmmo] = useState(gameState.playerAmmo);
+    const [score, setScore] = useState(gameState.score);
+    const [showReloadOk, setShowReloadOk] = useState(false);
+    const [isFlashingReload, setIsFlashingReload] = useState(false);
+    const [showDoubleTapToShoot, setShowDoubleTapToShoot] = useState(true);
+
+    const gameLoop = useCallback(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
 
-        // Apply screen shake and red flash if player is hit
+        // Update local state from gameState
+        setLives(gameState.playerLives);
+        setAmmo(gameState.playerAmmo);
+        setScore(gameState.score);
+        setGameOver(gameState.gameOver);
+        setShowReloadOk(gameState.showReloadOk);
+        setIsFlashingReload(gameState.playerAmmo === 0);
+        setShowDoubleTapToShoot(gameState.showDoubleTapToShoot);
+
         let shakeX = 0;
         let shakeY = 0;
         if (gameState.isPlayerHit) {
-            shakeX = (Math.random() - 0.5) * 10; // Shake by up to 10 pixels
+            shakeX = (Math.random() - 0.5) * 10;
             shakeY = (Math.random() - 0.5) * 10;
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red flash
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         } else if (gameState.isReloadShaking) {
-            shakeY = (Math.random() - 0.5) * 5; // Subtle vertical shake for reload
+            shakeY = (Math.random() - 0.5) * 5;
         }
 
-        ctx.save(); // Save the current canvas state
-        ctx.translate(shakeX, shakeY); // Apply shake translation
-
-        // Clear canvas
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Update game state
-        gameState.processHitCircles(); // Process hit circles and collisions
-        gameState.processBadGuyShotEffects(); // Process bad guy shot effects
+        gameState.processHitCircles();
+        gameState.processBadGuyShotEffects();
 
         gameState.badGuys.forEach(badGuy => {
-            const shotResult = badGuy.update(timestamp);
+            const shotResult = badGuy.update(performance.now());
             if (shotResult && shotResult.shot) {
-                // NPC shoots player, take 1 life away
                 gameState.loseLife();
                 gameState.createBadGuyShotEffect(shotResult.x, shotResult.y);
-                console.log('Player lives:', gameState.playerLives);
             }
         });
 
-        gameState.goodGuys.forEach(goodGuy => {
-            goodGuy.update(timestamp); // Update good guy movement
-        });
-
-        gameState.goodGuys.forEach(goodGuy => {
-            goodGuy.update(timestamp); // Update good guy movement
-        });
-
-        // Remove dead bad guys (if any)
+        gameState.goodGuys.forEach(goodGuy => goodGuy.update(performance.now()));
         gameState.badGuys = gameState.badGuys.filter(bg => bg.isAlive);
-        gameState.goodGuys = gameState.goodGuys.filter(gg => gg.isAlive); // Also remove dead good guys
+        gameState.goodGuys = gameState.goodGuys.filter(gg => gg.isAlive);
 
-        // Render entities
         gameState.badGuys.forEach(badGuy => {
-            // Flash between orange and red
             ctx.fillStyle = (badGuy.flashing && badGuy.flashCount % 2 === 0) ? 'orange' : 'red';
             ctx.fillRect(badGuy.x, badGuy.y, badGuy.width, badGuy.height);
         });
@@ -72,32 +77,29 @@ const GameCanvas = () => {
             ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
         });
 
-        // Draw bad guy shooting effects
         gameState.badGuyShotEffects.forEach(effect => {
-            const elapsed = timestamp - effect.creationTime;
-            const progress = elapsed / effect.duration; // 0 to 1
-            const maxRadius = Math.max(canvas.width, canvas.height) * 1.2; // Expand beyond screen
-            const currentRadius = Math.max(0, maxRadius * progress); // Ensure radius is not negative
-            const opacity = Math.max(0, Math.min(1, 1 - progress)); // Fade out, clamped between 0 and 1
-
+            const elapsed = performance.now() - effect.creationTime;
+            const progress = elapsed / effect.duration;
+            const maxRadius = Math.max(canvas.width, canvas.height) * 1.2;
+            const currentRadius = Math.max(0, maxRadius * progress);
+            const opacity = Math.max(0, 1 - progress);
             ctx.beginPath();
             ctx.arc(effect.x, effect.y, currentRadius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`; // Red, fading out
+            ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`;
             ctx.fill();
         });
 
-        // Draw hit circles
         gameState.hitCircles.forEach(circle => {
             ctx.beginPath();
             ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)'; // Semi-transparent yellow
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
             ctx.fill();
             ctx.strokeStyle = 'yellow';
             ctx.lineWidth = 2;
             ctx.stroke();
         });
 
-        ctx.restore(); // Restore canvas state to remove shake translation
+        ctx.restore();
 
         if (!gameState.gameOver) {
             animationFrameId.current = requestAnimationFrame(gameLoop);
@@ -107,110 +109,87 @@ const GameCanvas = () => {
     const spawnRandomNPC = useCallback(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
-        const isBadGuy = Math.random() < 0.8; // 80% chance for a bad guy
-        const fromLeft = Math.random() < 0.5; // 50% chance to come from left
-        const y = Math.random() * (canvas.height - 50); // Random height, ensure it's within canvas bounds
+        const isBadGuy = Math.random() < 0.8;
+        const fromLeft = Math.random() < 0.5;
+        const y = Math.random() * (canvas.height - 50);
         const width = 50;
         const height = 50;
-
-        let x;
-        let direction;
-
-        if (fromLeft) {
-            x = -width; // Start off-screen to the left
-            direction = 1; // Move right
-        } else {
-            x = canvas.width; // Start off-screen to the right
-            direction = -1; // Move left
-        }
+        let x = fromLeft ? -width : canvas.width;
+        let direction = fromLeft ? 1 : -1;
 
         if (isBadGuy) {
-            const badGuy = new BadGuy(x, y, width, height, canvas.width, direction);
-            gameState.addBadGuy(badGuy);
+            gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction));
         } else {
             const goodGuy = new GoodGuy(x, y, width, height, direction);
-            goodGuy.canvasWidth = canvas.width; // GoodGuy also needs canvasWidth for off-screen check
+            goodGuy.canvasWidth = canvas.width;
             gameState.addGoodGuy(goodGuy);
         }
     }, []);
 
-    const handleRestart = useCallback(() => {
+    const startGame = useCallback(() => {
         gameState.reset();
-        playerRef.current = new Player(); // Re-initialize player
-        // Clear existing entities and re-spawn if needed
-        gameState.badGuys = [];
-        gameState.goodGuys = [];
-        // Re-start game loop if it was stopped
-        if (animationFrameId.current) {
-            cancelAnimationFrame(animationFrameId.current);
-        }
-        if (spawnIntervalId.current) { // Clear existing spawn interval
-            clearInterval(spawnIntervalId.current);
-        }
+        gameState.isTitleScreen = false;
+        gameState.gameStarted = true;
+        gameState.showDoubleTapToShoot = true;
+
+        setIsTitleScreen(false);
+        setGameStarted(true);
+        setGameOver(false);
+
+        if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
         animationFrameId.current = requestAnimationFrame(gameLoop);
-        gameState.gameStarted = true; // Ensure gameStarted is true after restart
-        // Do not start spawn interval immediately on restart
+
+        if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
+        spawnIntervalId.current = setInterval(spawnRandomNPC, 2000);
     }, [gameLoop, spawnRandomNPC]);
+
+    const handleReturnToTitle = useCallback(() => {
+        gameState.isTitleScreen = true;
+        gameState.gameStarted = false;
+        gameState.gameOver = false;
+
+        setIsTitleScreen(true);
+        setGameStarted(false);
+        setGameOver(false);
+
+        if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
+        spawnIntervalId.current = null;
+        if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const container = canvas.parentElement; // Get the parent container
-        if (container) {
-            container.style.width = window.innerWidth > 600 ? '400px' : '90%';
-            container.style.height = `${window.innerHeight * 0.8}px`;
-            container.style.position = 'relative'; // Ensure container is positioned for absolute children
-        }
-
-        canvas.width = window.innerWidth > 600 ? 400 : window.innerWidth * 0.9;
-        canvas.height = window.innerHeight * 0.8;
+        const container = canvas.parentElement;
+        container.style.width = window.innerWidth > 600 ? '400px' : '90%';
+        container.style.height = `${window.innerHeight * 0.8}px`;
+        container.style.position = 'relative';
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
 
         inputHandlerRef.current = new InputHandler(canvas);
-
         inputHandlerRef.current.onShoot = (x, y) => {
             if (gameState.gameOver || !gameState.gameStarted) return;
-
             if (playerRef.current.shoot()) {
                 gameState.shootBullet();
-                console.log('Shot fired! Ammo:', gameState.playerAmmo);
-
-                // Hit detection is now handled by gameState.processHitCircles
-                // The onShoot callback in inputHandler.js now directly calls gameState.createHitCircle
-                // which will then be processed in the gameLoop by gameState.processHitCircles
-            } else {
-                console.log('Out of ammo!');
+                gameState.createHitCircle(x, y);
             }
         };
-
         inputHandlerRef.current.onReload = () => {
             if (gameState.gameOver || !gameState.gameStarted) return;
             if (playerRef.current.ammo < 6 && !playerRef.current.reloading) {
                 playerRef.current.reloading = true;
-                console.log('Reloading...');
                 setTimeout(() => {
                     playerRef.current.reload();
                     gameState.reloadAmmo();
-                    console.log('Reloaded! Ammo:', gameState.playerAmmo);
                 }, 1000);
             }
         };
 
-        gameState.gameStarted = true;
-        animationFrameId.current = requestAnimationFrame(gameLoop);
-
-        // Do not start spawn interval immediately
-
         return () => {
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-            }
-            if (spawnIntervalId.current) { // Clear the interval on unmount
-                clearInterval(spawnIntervalId.current);
-            }
-            if (inputHandlerRef.current) {
-                const ih = inputHandlerRef.current;
+            if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+            if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
+            const ih = inputHandlerRef.current;
+            if (ih) {
                 ih.canvas.removeEventListener('mousedown', ih.handleMouseDown);
                 ih.canvas.removeEventListener('mouseup', ih.handleMouseUp);
                 ih.canvas.removeEventListener('mousemove', ih.handleMouseMove);
@@ -218,29 +197,27 @@ const GameCanvas = () => {
                 ih.canvas.removeEventListener('touchend', ih.handleTouchEnd);
                 ih.canvas.removeEventListener('touchmove', ih.handleTouchMove);
             }
-            // Reset playerRef when component unmounts or game restarts
-            playerRef.current = new Player();
         };
-    }, [gameLoop, spawnRandomNPC]);
-
-    useEffect(() => {
-        const updateLocalState = () => {
-            setLocalShowDoubleTapToShoot(gameState.showDoubleTapToShoot);
-        };
-        const interval = setInterval(updateLocalState, 100);
-        return () => clearInterval(interval);
-    }, []);
-
-    useEffect(() => {
-        if (!localShowDoubleTapToShoot && !spawnIntervalId.current) {
-            spawnIntervalId.current = setInterval(spawnRandomNPC, 2000);
-        }
-    }, [localShowDoubleTapToShoot, spawnRandomNPC]);
+    }, [gameLoop]);
 
     return (
-        <div style={{ border: '1px solid black', margin: 'auto', position: 'relative' }}>
+        <div style={{ border: '1px solid black', margin: 'auto', position: 'relative', width: '100%', height: '100%' }}>
             <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }}></canvas>
-            <GameUI onRestart={handleRestart} />
+            {isTitleScreen ? (
+                <TitleScreen onStartGame={startGame} />
+            ) : (
+                <GameUI
+                    lives={lives}
+                    ammo={ammo}
+                    score={score}
+                    gameOver={gameOver}
+                    showReloadOk={showReloadOk}
+                    isFlashingReload={isFlashingReload}
+                    showDoubleTapToShoot={showDoubleTapToShoot}
+                    onRestart={startGame}
+                    onReturnToTitle={handleReturnToTitle}
+                />
+            )}
         </div>
     );
 };

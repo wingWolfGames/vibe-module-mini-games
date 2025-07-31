@@ -1,35 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import gameState from './gameState';
+import React from 'react';
 
-const GameUI = ({ onRestart }) => {
-    const [lives, setLives] = useState(gameState.playerLives);
-    const [ammo, setAmmo] = useState(gameState.playerAmmo);
-    const [score, setScore] = useState(gameState.score);
-    const [gameOver, setGameOver] = useState(gameState.gameOver);
-    const [showReloadOk, setShowReloadOk] = useState(gameState.showReloadOk);
-    const [isFlashingReload, setIsFlashingReload] = useState(false);
-    const [showDoubleTapToShoot, setShowDoubleTapToShoot] = useState(gameState.showDoubleTapToShoot);
-
-    useEffect(() => {
-        const updateUI = () => {
-            setLives(gameState.playerLives);
-            setAmmo(gameState.playerAmmo);
-            setScore(gameState.score);
-            setGameOver(gameState.gameOver);
-            setShowReloadOk(gameState.showReloadOk);
-            setShowDoubleTapToShoot(gameState.showDoubleTapToShoot);
-            if (gameState.playerAmmo === 0 && !isFlashingReload) {
-                setIsFlashingReload(true);
-            } else if (gameState.playerAmmo > 0 && isFlashingReload) {
-                setIsFlashingReload(false);
-            }
-        };
-
-        const interval = setInterval(updateUI, 100);
-
-        return () => clearInterval(interval);
-    }, []);
-
+const GameUI = ({
+    lives,
+    ammo,
+    score,
+    gameOver,
+    showReloadOk,
+    isFlashingReload,
+    showDoubleTapToShoot,
+    onRestart,
+    onReturnToTitle
+}) => {
     return (
         <div style={{
             position: 'absolute',
@@ -154,10 +135,22 @@ const GameUI = ({ onRestart }) => {
                             padding: '10px 20px',
                             fontSize: '1.2em',
                             cursor: 'pointer',
-                            pointerEvents: 'auto'
+                            pointerEvents: 'auto',
+                            marginBottom: '10px' // Add some space below Restart button
                         }}
                     >
                         Restart Game
+                    </button>
+                    <button
+                        onClick={onReturnToTitle}
+                        style={{
+                            padding: '10px 20px',
+                            fontSize: '1.2em',
+                            cursor: 'pointer',
+                            pointerEvents: 'auto'
+                        }}
+                    >
+                        Return to Title Screen
                     </button>
                 </div>
             )}

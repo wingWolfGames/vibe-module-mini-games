@@ -6,6 +6,8 @@ class GameState {
         this.gameOver = false;
         this.gameStarted = false;
         this.showDoubleTapToShoot = true; // New property for the initial instruction
+        this.isTitleScreen = true; // New property for title screen state
+        this.hasGameBeenPlayedOnce = false; // New property to track if game has been played at least once
         this.badGuys = [];
         this.goodGuys = [];
         this.hitCircles = []; // New property for hit circles
@@ -22,6 +24,7 @@ class GameState {
         this.gameOver = false;
         this.gameStarted = false;
         this.showDoubleTapToShoot = true; // Reset on game reset
+        // this.isTitleScreen = true; // Removed: isTitleScreen should be managed by GameCanvas
         this.badGuys = [];
         this.goodGuys = [];
         this.hitCircles = []; // Reset hit circles on game reset
