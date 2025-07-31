@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import InputHandler from './inputHandler';
 import gameState from './gameState';
-import { Player, BadGuy, GoodGuy } from './entities';
+import { Player, BadGuy, GoodGuy, UnknownGuy } from './entities';
 import GameUI from './GameUI';
 import TitleScreen from '../../components/TitleScreen';
 
@@ -49,6 +49,7 @@ const GameCanvas = () => {
             }
             gameState.badGuys = [];
             gameState.goodGuys = [];
+            gameState.unknownGuys = []; // Clear unknown guys on game over
             gameState.hitCircles = [];
             gameState.badGuyShotEffects = [];
             animationFrameId.current = requestAnimationFrame(gameLoop);
@@ -82,8 +83,33 @@ const GameCanvas = () => {
             });
 
             gameState.goodGuys.forEach(goodGuy => goodGuy.update(performance.now()));
+
+            // Update and handle UnknownGuys
+            gameState.unknownGuys.forEach(unknownGuy => {
+                const transformResult = unknownGuy.update(performance.now());
+                if (transformResult && transformResult.transform) {
+                    // Transform into GoodGuy or BadGuy
+                    const isBadGuy = Math.random() < 0.5; // 50% chance to become BadGuy
+                    if (isBadGuy) {
+                        const newBadGuy = new BadGuy(transformResult.x, transformResult.y, transformResult.width, transformResult.height, canvas.width, transformResult.direction);
+                        // Adjust speed and shooting frequency for transformed BadGuy
+                        newBadGuy.speed *= 1.5; // Walk a bit faster
+                        newBadGuy.reloadTime /= 2; // Shoot more frequently
+                        newBadGuy.nextShotTime = Date.now() + newBadGuy.reloadTime; // Set initial shot time
+                        newBadGuy.timeToFlash = newBadGuy.nextShotTime - newBadGuy.tellDuration;
+                        gameState.addBadGuy(newBadGuy);
+                    } else {
+                        const newGoodGuy = new GoodGuy(transformResult.x, transformResult.y, transformResult.width, transformResult.height, transformResult.direction);
+                        newGoodGuy.canvasWidth = canvas.width;
+                        gameState.addGoodGuy(newGoodGuy);
+                    }
+                    unknownGuy.isAlive = false; // Mark unknown guy for removal
+                }
+            });
+
             gameState.badGuys = gameState.badGuys.filter(bg => bg.isAlive);
             gameState.goodGuys = gameState.goodGuys.filter(gg => gg.isAlive);
+            gameState.unknownGuys = gameState.unknownGuys.filter(ug => ug.isAlive); // Filter out transformed unknown guys
 
             gameState.badGuys.forEach(badGuy => {
                 ctx.fillStyle = (badGuy.flashing && badGuy.flashCount % 2 === 0) ? 'orange' : 'red';
@@ -93,6 +119,11 @@ const GameCanvas = () => {
             gameState.goodGuys.forEach(goodGuy => {
                 ctx.fillStyle = 'blue';
                 ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
+            });
+
+            gameState.unknownGuys.forEach(unknownGuy => {
+                ctx.fillStyle = 'gray';
+                ctx.fillRect(unknownGuy.x, unknownGuy.y, unknownGuy.width, unknownGuy.height);
             });
 
             gameState.badGuyShotEffects.forEach(effect => {
@@ -144,7 +175,7 @@ const GameCanvas = () => {
     const spawnRandomNPC = useCallback(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const isBadGuy = Math.random() < 0.8;
+        const npcType = Math.random(); // 0-1
         const fromLeft = Math.random() < 0.5;
         const y = Math.random() * (canvas.height - 50);
         const width = 50;
@@ -152,12 +183,16 @@ const GameCanvas = () => {
         let x = fromLeft ? -width : canvas.width;
         let direction = fromLeft ? 1 : -1;
 
-        if (isBadGuy) {
+        if (npcType < 0.75) { // 75% chance for BadGuy
             gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction));
-        } else {
+        } else if (npcType < 0.85) { // 10% chance for GoodGuy (0.75 to 0.85)
             const goodGuy = new GoodGuy(x, y, width, height, direction);
             goodGuy.canvasWidth = canvas.width;
             gameState.addGoodGuy(goodGuy);
+        } else { // 15% chance for UnknownGuy (0.85 to 1.0)
+            const unknownGuy = new UnknownGuy(x, y, width, height, direction);
+            unknownGuy.canvasWidth = canvas.width;
+            gameState.addUnknownGuy(unknownGuy);
         }
     }, []);
 

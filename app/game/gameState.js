@@ -10,6 +10,7 @@ class GameState {
         this.hasGameBeenPlayedOnce = false; // New property to track if game has been played at least once
         this.badGuys = [];
         this.goodGuys = [];
+        this.unknownGuys = []; // New property for unknown guys
         this.hitCircles = []; // New property for hit circles
         this.isPlayerHit = false; // New property for hit feedback
         this.badGuyShotEffects = []; // New property for bad guy shooting effects
@@ -30,6 +31,7 @@ class GameState {
         this.currentScreen = 'TITLE'; // Reset to title screen on game reset
         this.badGuys = [];
         this.goodGuys = [];
+        this.unknownGuys = []; // Reset unknown guys on game reset
         this.hitCircles = []; // Reset hit circles on game reset
         this.isPlayerHit = false;
         this.isHitByBadGuy = false;
@@ -101,6 +103,15 @@ class GameState {
     removeGoodGuy(goodGuy) {
         this.goodGuys = this.goodGuys.filter(gg => gg !== goodGuy);
     }
+
+    addUnknownGuy(unknownGuy) {
+        this.unknownGuys.push(unknownGuy);
+    }
+
+    removeUnknownGuy(unknownGuy) {
+        this.unknownGuys = this.unknownGuys.filter(ug => ug !== unknownGuy);
+    }
+
     createHitCircle(x, y, radius = 25) {
         this.hitCircles.push({ x, y, radius, creationTime: Date.now() });
     }
@@ -134,11 +145,22 @@ class GameState {
                     }
                 }
             });
+
+            // Check collision with unknown guys
+            this.unknownGuys.forEach(unknownGuy => {
+                if (unknownGuy.isAlive && unknownGuy.isHit(circle.x, circle.y, circle.radius)) {
+                    unknownGuy.takeDamage(1);
+                    if (!unknownGuy.isAlive) {
+                        this.loseLife(); // Lose life for hitting an unknown guy
+                    }
+                }
+            });
         });
 
-        // Remove dead bad guys and good guys
+        // Remove dead bad guys, good guys, and unknown guys
         this.badGuys = this.badGuys.filter(bg => bg.isAlive);
         this.goodGuys = this.goodGuys.filter(gg => gg.isAlive);
+        this.unknownGuys = this.unknownGuys.filter(ug => ug.isAlive);
     }
 
     createBadGuyShotEffect(x, y) {

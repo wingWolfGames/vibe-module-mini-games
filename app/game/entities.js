@@ -44,6 +44,41 @@ class Character {
         this.canStop = Math.random() < 0.3; // 30% chance to have stop-and-go behavior
     }
 
+    update(deltaTime) {
+        if (this.canStop) {
+            if (!this.isStopped && Math.random() < 0.005) { // Small chance to stop each frame
+                this.isStopped = true;
+                this.stopTime = Date.now();
+                this.resumeTime = this.stopTime + this.stopDuration;
+            }
+
+            if (this.isStopped && Date.now() >= this.resumeTime) {
+                this.isStopped = false;
+                this.stopTime = 0;
+                this.resumeTime = 0;
+                this.stopDuration = (Math.random() * 1000) + 1000; // Reset for next stop
+
+                // 40% chance to change direction when resuming movement
+                if (Math.random() < 0.4) {
+                    this.direction *= -1;
+                }
+            }
+        }
+
+        // Movement logic
+        if (!this.isStopped) {
+            this.x += this.speed * this.direction;
+        }
+
+        // Mark as not alive if off-screen
+        if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
+            this.isAlive = false;
+        } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
+            this.isAlive = false;
+        }
+        return false; // Base character doesn't shoot
+    }
+
     isHit(targetX, targetY, radius) {
         // Check for circular collision with a rectangular entity
         // Find the closest point on the rectangle to the center of the circle
@@ -206,4 +241,43 @@ class GoodGuy extends Character {
     }
 }
 
-export { Player, BadGuy, GoodGuy };
+class UnknownGuy extends Character {
+    constructor(x, y, width, height, direction) {
+        super(x, y, width, height, 'unknown', direction);
+        this.transformTime = 0;
+        this.transformed = false;
+        this.canStop = true; // UnknownGuy always has stop-and-go behavior
+        this.stopDuration = 1000; // Fixed 1 second stop duration for transformation
+    }
+
+    update(deltaTime) {
+        if (!this.transformed) {
+            if (!this.isStopped && Math.random() < 0.005) { // Small chance to stop each frame
+                this.isStopped = true;
+                this.stopTime = Date.now();
+                this.transformTime = this.stopTime + this.stopDuration; // Set transform time
+            }
+
+            if (this.isStopped && Date.now() >= this.transformTime) {
+                this.transformed = true; // Mark as transformed
+                // Return transformation event to game loop
+                return { transform: true, x: this.x, y: this.y, width: this.width, height: this.height, direction: this.direction };
+            }
+        }
+
+        // Movement logic
+        if (!this.isStopped) {
+            this.x += this.speed * this.direction;
+        }
+
+        // Mark as not alive if off-screen
+        if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
+            this.isAlive = false;
+        } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
+            this.isAlive = false;
+        }
+        return false; // Unknown guys don't shoot or have other special updates
+    }
+}
+
+export { Player, BadGuy, GoodGuy, UnknownGuy };
