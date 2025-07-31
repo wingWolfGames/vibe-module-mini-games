@@ -1,4 +1,6 @@
 import React from 'react';
+import TitleScreen from '../../components/TitleScreen';
+import IntroScreen from '../../components/IntroScreen';
 
 const GameUI = ({
     lives,
@@ -9,7 +11,10 @@ const GameUI = ({
     isFlashingReload,
     showDoubleTapToShoot,
     onRestart,
-    onReturnToTitle
+    onReturnToTitle,
+    currentScreen, // New prop for current screen
+    onStartIntro, // New prop for starting intro
+    onStartGame // New prop for starting game from intro
 }) => {
     return (
         <div style={{
@@ -18,7 +23,7 @@ const GameUI = ({
             left: 0,
             width: '100%',
             height: '100%',
-            pointerEvents: gameOver ? 'auto' : 'none' // Allow clicks only when game is over for restart button
+            // Removed pointerEvents: gameOver ? 'auto' : 'none' to allow clicks on title/intro screens
         }}>
             <div style={{
                 position: 'absolute',
@@ -113,6 +118,14 @@ const GameUI = ({
                 }}>
                     Double tap to Shoot!
                 </div>
+            )}
+
+            {currentScreen === 'TITLE' && (
+                <TitleScreen onStartIntro={onStartIntro} />
+            )}
+
+            {currentScreen === 'INTRO' && (
+                <IntroScreen onNext={onStartGame} />
             )}
 
             {gameOver && (

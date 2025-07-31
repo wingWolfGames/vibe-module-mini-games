@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TitleScreen = ({ onStartIntro }) => {
+const IntroScreen = ({ onNext }) => {
     return (
         <div style={{
             position: 'absolute',
@@ -8,7 +8,7 @@ const TitleScreen = ({ onStartIntro }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundImage: `url('/backgrounds/HUB2_BG_v02.gif')`,
+            backgroundImage: `url('/backgrounds/HUB5_BG_v04.gif')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -17,11 +17,11 @@ const TitleScreen = ({ onStartIntro }) => {
             justifyContent: 'center',
             alignItems: 'center',
             color: 'white',
-            zIndex: 200 // Ensure it's above other game elements
+            zIndex: 200
         }}>
-            <h1 style={{ fontSize: '3em', marginBottom: '20px', textAlign: 'center' }}>PROTOTYPE GAME</h1>
+            <h1 style={{ fontSize: '3em', marginBottom: '20px', textAlign: 'center' }}>INTRO</h1>
             <button
-                onClick={onStartIntro}
+                onClick={onNext}
                 style={{
                     padding: '15px 30px',
                     fontSize: '1.5em',
@@ -32,10 +32,10 @@ const TitleScreen = ({ onStartIntro }) => {
                     borderRadius: '5px'
                 }}
             >
-                Start Game
+                NEXT
             </button>
         </div>
     );
 };
 
-export default TitleScreen;
+export default IntroScreen;

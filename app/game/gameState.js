@@ -6,7 +6,7 @@ class GameState {
         this.gameOver = false;
         this.gameStarted = false;
         this.showDoubleTapToShoot = true; // New property for the initial instruction
-        this.isTitleScreen = true; // New property for title screen state
+        this.currentScreen = 'TITLE'; // 'TITLE', 'INTRO', 'PLAYING'
         this.hasGameBeenPlayedOnce = false; // New property to track if game has been played at least once
         this.badGuys = [];
         this.goodGuys = [];
@@ -27,7 +27,7 @@ class GameState {
         this.gameOver = false;
         this.gameStarted = false;
         this.showDoubleTapToShoot = true; // Reset on game reset
-        // this.isTitleScreen = true; // Removed: isTitleScreen should be managed by GameCanvas
+        this.currentScreen = 'TITLE'; // Reset to title screen on game reset
         this.badGuys = [];
         this.goodGuys = [];
         this.hitCircles = []; // Reset hit circles on game reset
@@ -167,6 +167,10 @@ class GameState {
             clearTimeout(this.reloadOkTimeoutId);
             this.reloadOkTimeoutId = null;
         }
+    }
+
+    setScreen(screenName) {
+        this.currentScreen = screenName;
     }
 }
 

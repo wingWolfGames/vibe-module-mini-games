@@ -13,11 +13,11 @@ const GameCanvas = () => {
     const spawnIntervalId = useRef(null);
     const reloadTimeoutId = useRef(null); // New ref for reload timeout
 
-    // Centralized UI State
-    const [isTitleScreen, setIsTitleScreen] = useState(true);
+    // Centralized UI State (now managed by gameState.currentScreen)
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameActive, setGameActive] = useState(false); // New state for active game
+    const [currentScreen, setCurrentScreen] = useState(gameState.currentScreen); // Use gameState for current screen
     const [lives, setLives] = useState(gameState.playerLives);
     const [ammo, setAmmo] = useState(gameState.playerAmmo);
     const [score, setScore] = useState(gameState.score);
@@ -40,6 +40,7 @@ const GameCanvas = () => {
         setShowReloadOk(gameState.showReloadOk);
         setIsFlashingReload(gameState.playerAmmo === 0);
         setShowDoubleTapToShoot(gameState.showDoubleTapToShoot);
+        setCurrentScreen(gameState.currentScreen); // Update current screen state
 
         if (gameState.gameOver) {
             if (spawnIntervalId.current) {
@@ -158,13 +159,19 @@ const GameCanvas = () => {
         }
     }, []);
 
+    const startIntro = useCallback(() => {
+        gameState.setScreen('INTRO');
+        setCurrentScreen('INTRO'); // Explicitly update local state
+        setGameActive(false); // Game is not active during intro
+    }, []);
+
     const startGame = useCallback(() => {
         gameState.reset();
-        gameState.isTitleScreen = false;
+        gameState.setScreen('PLAYING'); // Set screen to PLAYING
+        setCurrentScreen('PLAYING'); // Explicitly update local state
         gameState.gameStarted = true;
         gameState.showDoubleTapToShoot = true;
 
-        setIsTitleScreen(false);
         setGameStarted(true);
         setGameOver(false);
         setGameActive(true); // Set game to active
@@ -179,11 +186,11 @@ const GameCanvas = () => {
     }, [gameLoop, spawnRandomNPC]);
 
     const handleReturnToTitle = useCallback(() => {
-        gameState.isTitleScreen = true;
+        gameState.setScreen('TITLE'); // Return to title screen
+        setCurrentScreen('TITLE'); // Explicitly update local state
         gameState.gameStarted = false;
         gameState.gameOver = false;
 
-        setIsTitleScreen(true);
         setGameStarted(false);
         setGameOver(false);
         setGameActive(false); // Set game to inactive
@@ -252,26 +259,44 @@ const GameCanvas = () => {
                 ih.canvas.removeEventListener('touchmove', ih.handleTouchMove);
             }
         };
-    }, [gameStarted, gameLoop]);
+    }, [gameStarted, gameLoop, currentScreen]); // Added currentScreen to dependencies
+
+    // Effect to synchronize local currentScreen state with gameState.currentScreen
+    useEffect(() => {
+        const handleScreenChange = () => {
+            setCurrentScreen(gameState.currentScreen);
+        };
+
+        // Since gameState is a singleton, we can't directly subscribe to its changes
+        // without modifying gameState to emit events.
+        // For now, we'll rely on the gameLoop to update currentScreen,
+        // but for immediate UI updates, we need to ensure the state is set.
+        // The issue is likely that the gameLoop isn't running when on the title screen,
+        // so setCurrentScreen isn't being called.
+
+        // A more robust solution would involve a state management pattern
+        // where gameState changes trigger React component updates more directly.
+        // For this immediate fix, we'll ensure startIntro and startGame
+        // also explicitly update the local currentScreen state.
+    }, []); // Empty dependency array means this runs once on mount
 
     return (
         <div style={{ border: '1px solid black', margin: 'auto', position: 'relative', width: '100%', height: '100%' }}>
             <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }}></canvas>
-            {isTitleScreen ? (
-                <TitleScreen onStartGame={startGame} />
-            ) : (
-                <GameUI
-                    lives={lives}
-                    ammo={ammo}
-                    score={score}
-                    gameOver={gameOver}
-                    showReloadOk={showReloadOk}
-                    isFlashingReload={isFlashingReload}
-                    showDoubleTapToShoot={showDoubleTapToShoot}
-                    onRestart={startGame}
-                    onReturnToTitle={handleReturnToTitle}
-                />
-            )}
+            <GameUI
+                lives={lives}
+                ammo={ammo}
+                score={score}
+                gameOver={gameOver}
+                showReloadOk={showReloadOk}
+                isFlashingReload={isFlashingReload}
+                showDoubleTapToShoot={showDoubleTapToShoot}
+                onRestart={startGame}
+                onReturnToTitle={handleReturnToTitle}
+                currentScreen={currentScreen} // Pass current screen state
+                onStartIntro={startIntro} // Pass start intro function
+                onStartGame={startGame} // Pass start game function
+            />
         </div>
     );
 };
