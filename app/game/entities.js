@@ -69,6 +69,9 @@ class Character {
         this.hp -= amount;
         if (this.hp <= 0) {
             this.isAlive = false;
+            if (this.type === 'bad') {
+                this.stopFlashing(); // Ensure flashing stops when bad guy is killed
+            }
         }
     }
 }

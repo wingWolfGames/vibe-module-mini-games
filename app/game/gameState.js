@@ -15,6 +15,8 @@ class GameState {
         this.badGuyShotEffects = []; // New property for bad guy shooting effects
         this.showReloadOk = false; // New property for reload success feedback
         this.isReloadShaking = false; // New property for reload shake feedback
+        this.playerHitTimeoutId = null; // To store timeout ID for player hit feedback
+        this.reloadOkTimeoutId = null; // To store timeout ID for reload feedback
     }
 
     reset() {
@@ -32,16 +34,20 @@ class GameState {
         this.badGuyShotEffects = []; // Reset bad guy shot effects on game reset
         this.showReloadOk = false; // Reset reload success feedback on game reset
         this.isReloadShaking = false; // Reset reload shake feedback on game reset
+        this.clearTimeouts(); // Clear any pending timeouts on reset
     }
 
     loseLife() {
         this.playerLives--;
         this.isPlayerHit = true; // Set to true when player is hit
-        setTimeout(() => {
+        if (this.playerHitTimeoutId) clearTimeout(this.playerHitTimeoutId); // Clear previous timeout
+        this.playerHitTimeoutId = setTimeout(() => {
             this.isPlayerHit = false; // Reset after a short duration
+            this.playerHitTimeoutId = null;
         }, 200); // Flash/shake duration
         if (this.playerLives <= 0) {
             this.gameOver = true;
+            this.clearTimeouts(); // Clear all timeouts when game is over
         }
     }
 
@@ -61,9 +67,11 @@ class GameState {
             this.playerAmmo = 6;
             this.showReloadOk = true;
             this.isReloadShaking = true;
-            setTimeout(() => {
+            if (this.reloadOkTimeoutId) clearTimeout(this.reloadOkTimeoutId); // Clear previous timeout
+            this.reloadOkTimeoutId = setTimeout(() => {
                 this.showReloadOk = false;
                 this.isReloadShaking = false;
+                this.reloadOkTimeoutId = null;
             }, 500); // Display for 0.5 seconds and shake duration
             return true;
         }
@@ -94,6 +102,8 @@ class GameState {
     }
 
     processHitCircles() {
+        if (this.gameOver) return; // Immediately stop processing if game is over
+
         const HIT_CIRCLE_DURATION = 100; // milliseconds
         const currentTime = Date.now();
 
@@ -142,6 +152,16 @@ class GameState {
         this.badGuyShotEffects = this.badGuyShotEffects.filter(effect => {
             return currentTime - effect.creationTime < effect.duration;
         });
+    }
+    clearTimeouts() {
+        if (this.playerHitTimeoutId) {
+            clearTimeout(this.playerHitTimeoutId);
+            this.playerHitTimeoutId = null;
+        }
+        if (this.reloadOkTimeoutId) {
+            clearTimeout(this.reloadOkTimeoutId);
+            this.reloadOkTimeoutId = null;
+        }
     }
 }
 
