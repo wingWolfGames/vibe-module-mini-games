@@ -13,7 +13,7 @@ class GameState {
     }
 
     reset() {
-        this.playerLives = 25; // Increased lives as per user request
+        this.playerLives = 5; // Increased lives as per user request
         this.playerAmmo = 6;
         this.score = 0;
         this.gameOver = false;

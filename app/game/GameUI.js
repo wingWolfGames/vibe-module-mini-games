@@ -21,27 +21,61 @@ const GameUI = ({ onRestart }) => {
     }, []);
 
     return (
-        <div style={{
-            position: 'absolute',
-            top: '10px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            padding: '10px 20px',
-            borderRadius: '5px',
-            zIndex: 100,
-            textAlign: 'center'
-        }}>
-            <p style={{ margin: '5px 0', fontSize: '1.2em' }}>Lives: {lives}</p>
-            <p style={{ margin: '5px 0', fontSize: '1.2em' }}>Ammo: {ammo}</p>
-            <p style={{ margin: '5px 0', fontSize: '1.2em' }}>Score: {score}</p>
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                zIndex: 100
+            }}>
+                <p style={{ margin: '0', fontSize: '1em' }}>Lives: {lives}</p>
+            </div>
+
+            <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                zIndex: 100
+            }}>
+                <p style={{ margin: '0', fontSize: '1em' }}>Score: {score}</p>
+            </div>
+
+            <div style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                zIndex: 100,
+                textAlign: 'center'
+            }}>
+                <p style={{ margin: '0', fontSize: '1em' }}>Ammo: {ammo}</p>
+            </div>
+
             {gameOver && (
-                <>
-                    <h2 style={{ color: 'red', fontSize: '2em', marginTop: '10px' }}>GAME OVER</h2>
+                <div style={{
+                    position: 'absolute',
+                    top: '25%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center',
+                    zIndex: 101,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: '20px',
+                    borderRadius: '10px'
+                }}>
                     <button
                         onClick={onRestart}
                         style={{
-                            marginTop: '10px',
+                            marginTop: '15px', /* Added margin-top to push it down from GAME OVER */
                             padding: '10px 20px',
                             fontSize: '1.2em',
                             cursor: 'pointer'
@@ -49,7 +83,7 @@ const GameUI = ({ onRestart }) => {
                     >
                         Restart Game
                     </button>
-                </>
+                </div>
             )}
         </div>
     );
