@@ -229,7 +229,7 @@ const GameCanvas = () => {
         };
         inputHandlerRef.current.onReload = () => {
             // Removed redundant check, InputHandler class handles active state
-            if (playerRef.current.ammo < 6 && !playerRef.current.reloading) {
+            if (gameState.playerAmmo < 6 && !playerRef.current.reloading) {
                 playerRef.current.reloading = true;
                 if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current);
                 reloadTimeoutId.current = setTimeout(() => {
@@ -253,12 +253,12 @@ const GameCanvas = () => {
             if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current);
             const ih = inputHandlerRef.current;
             if (ih) {
-                ih.canvas.removeEventListener('mousedown', ih.handleMouseDown);
-                ih.canvas.removeEventListener('mouseup', ih.handleMouseUp);
-                ih.canvas.removeEventListener('mousemove', ih.handleMouseMove);
-                ih.canvas.removeEventListener('touchstart', ih.handleTouchStart);
-                ih.canvas.removeEventListener('touchend', ih.handleTouchEnd);
-                ih.canvas.removeEventListener('touchmove', ih.handleTouchMove);
+                ih.canvas.removeEventListener('mousedown', ih.boundHandleMouseDown);
+                ih.canvas.removeEventListener('mouseup', ih.boundHandleMouseUp);
+                ih.canvas.removeEventListener('mousemove', ih.boundHandleMouseMove);
+                ih.canvas.removeEventListener('touchstart', ih.boundHandleTouchStart);
+                ih.canvas.removeEventListener('touchend', ih.boundHandleTouchEnd);
+                ih.canvas.removeEventListener('touchmove', ih.boundHandleTouchMove);
             }
         };
     }, [gameStarted, gameLoop, currentScreen]); // Added currentScreen to dependencies

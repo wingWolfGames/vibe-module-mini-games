@@ -5,24 +5,31 @@ class InputHandler {
         this.canvas = canvas;
         this.isMouseDown = false;
         this.mouseDownTime = 0;
-        this.lastClickTime = 0;
-        this.clickCount = 0;
         this.swipeStartY = 0;
         this.reloadThreshold = 50; // Pixels to swipe up for reload
+        this.canShoot = true; // Flag to control shooting rate
+        this.shootCooldown = 200; // Cooldown in ms after a shot
 
         this.initEventListeners();
     }
 
     initEventListeners() {
         // Mouse events for PC testing
-        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
-        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.boundHandleMouseDown = this.handleMouseDown.bind(this);
+        this.boundHandleMouseUp = this.handleMouseUp.bind(this);
+        this.boundHandleMouseMove = this.handleMouseMove.bind(this);
+        this.boundHandleTouchStart = this.handleTouchStart.bind(this);
+        this.boundHandleTouchEnd = this.handleTouchEnd.bind(this);
+        this.boundHandleTouchMove = this.handleTouchMove.bind(this);
+
+        this.canvas.addEventListener('mousedown', this.boundHandleMouseDown);
+        this.canvas.addEventListener('mouseup', this.boundHandleMouseUp);
+        this.canvas.addEventListener('mousemove', this.boundHandleMouseMove);
 
         // Touch events for mobile
-        this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
-        this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
-        this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this));
+        this.canvas.addEventListener('touchstart', this.boundHandleTouchStart);
+        this.canvas.addEventListener('touchend', this.boundHandleTouchEnd);
+        this.canvas.addEventListener('touchmove', this.boundHandleTouchMove);
 
         this.onShoot = null; // Callback for shooting
         this.onReload = null; // Callback for reloading
@@ -40,24 +47,18 @@ class InputHandler {
         this.isMouseDown = false;
         const clickDuration = Date.now() - this.mouseDownTime;
 
-        // Double-tap simulation for shooting
-        if (clickDuration < 200) { // Short click
-            const currentTime = Date.now();
-            if (currentTime - this.lastClickTime < 300) { // Second click within 300ms
-                this.clickCount++;
-                if (this.clickCount === 2) {
-                    if (this.onShoot) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        const x = event.clientX - rect.left;
-                        const y = event.clientY - rect.top;
-                        this.onShoot(x, y);
-                    }
-                    this.clickCount = 0; // Reset for next double tap
-                }
-            } else {
-                this.clickCount = 1;
+        // Shooting logic (simple debounce)
+        if (clickDuration < 200) { // Short click/touch
+            if (this.onShoot && this.canShoot) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                this.onShoot(x, y);
+                this.canShoot = false; // Disable shooting
+                setTimeout(() => {
+                    this.canShoot = true; // Re-enable after cooldown
+                }, this.shootCooldown);
             }
-            this.lastClickTime = currentTime;
         }
     }
 
@@ -87,25 +88,19 @@ class InputHandler {
         this.isMouseDown = false; // Simulate mouse up for touch
         const clickDuration = Date.now() - this.mouseDownTime;
 
-        // Double-tap for shooting
+        // Shooting logic (simple debounce)
         if (clickDuration < 200) { // Short touch
-            const currentTime = Date.now();
-            if (currentTime - this.lastClickTime < 300) { // Second touch within 300ms
-                this.clickCount++;
-                if (this.clickCount === 2) {
-                    if (this.onShoot) {
-                        const touch = event.changedTouches[0];
-                        const rect = this.canvas.getBoundingClientRect();
-                        const x = touch.clientX - rect.left;
-                        const y = touch.clientY - rect.top;
-                        this.onShoot(x, y);
-                    }
-                    this.clickCount = 0; // Reset for next double tap
-                }
-            } else {
-                this.clickCount = 1;
+            if (this.onShoot && this.canShoot) {
+                const touch = event.changedTouches[0];
+                const rect = this.canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                this.onShoot(x, y);
+                this.canShoot = false; // Disable shooting
+                setTimeout(() => {
+                    this.canShoot = true; // Re-enable after cooldown
+                }, this.shootCooldown);
             }
-            this.lastClickTime = currentTime;
         }
     }
 

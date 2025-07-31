@@ -1,7 +1,9 @@
+import gameState from './gameState'; // Import gameState
+
 class Player {
     constructor() {
         this.lives = 5;
-        this.ammo = 6;
+        // this.ammo = 6; // Removed - ammo is now managed by gameState
         this.reloading = false;
     }
 
@@ -13,15 +15,13 @@ class Player {
     }
 
     shoot() {
-        if (this.ammo > 0) {
-            this.ammo--;
-            return true;
-        }
-        return false;
+        // This method only checks if a shot is possible based on global game state ammo.
+        // gameState.shootBullet() will handle the actual ammo decrement.
+        return gameState.playerAmmo > 0;
     }
 
     reload() {
-        this.ammo = 6;
+        // Ammo is reloaded via gameState.reloadAmmo()
         this.reloading = false;
     }
 }
