@@ -32,11 +32,14 @@ const GameCanvas = () => {
 
         // Update game state
         gameState.processHitCircles(); // Process hit circles and collisions
+        gameState.processBadGuyShotEffects(); // Process bad guy shot effects
 
         gameState.badGuys.forEach(badGuy => {
-            if (badGuy.update(timestamp)) {
+            const shotResult = badGuy.update(timestamp);
+            if (shotResult && shotResult.shot) {
                 // NPC shoots player, take 1 life away
                 gameState.loseLife();
+                gameState.createBadGuyShotEffect(shotResult.x, shotResult.y);
                 console.log('Player lives:', gameState.playerLives);
             }
         });
@@ -63,6 +66,20 @@ const GameCanvas = () => {
         gameState.goodGuys.forEach(goodGuy => {
             ctx.fillStyle = 'blue';
             ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
+        });
+
+        // Draw bad guy shooting effects
+        gameState.badGuyShotEffects.forEach(effect => {
+            const elapsed = timestamp - effect.creationTime;
+            const progress = elapsed / effect.duration; // 0 to 1
+            const maxRadius = Math.max(canvas.width, canvas.height) * 1.2; // Expand beyond screen
+            const currentRadius = Math.max(0, maxRadius * progress); // Ensure radius is not negative
+            const opacity = Math.max(0, Math.min(1, 1 - progress)); // Fade out, clamped between 0 and 1
+
+            ctx.beginPath();
+            ctx.arc(effect.x, effect.y, currentRadius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`; // Red, fading out
+            ctx.fill();
         });
 
         // Draw hit circles

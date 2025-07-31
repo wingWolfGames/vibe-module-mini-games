@@ -9,6 +9,7 @@ class GameState {
         this.goodGuys = [];
         this.hitCircles = []; // New property for hit circles
         this.isPlayerHit = false; // New property for hit feedback
+        this.badGuyShotEffects = []; // New property for bad guy shooting effects
     }
 
     reset() {
@@ -21,6 +22,7 @@ class GameState {
         this.goodGuys = [];
         this.hitCircles = []; // Reset hit circles on game reset
         this.isPlayerHit = false;
+        this.badGuyShotEffects = []; // Reset bad guy shot effects on game reset
     }
 
     loseLife() {
@@ -101,6 +103,23 @@ class GameState {
         // Remove dead bad guys and good guys
         this.badGuys = this.badGuys.filter(bg => bg.isAlive);
         this.goodGuys = this.goodGuys.filter(gg => gg.isAlive);
+    }
+
+    createBadGuyShotEffect(x, y) {
+        const DURATION = 500; // 0.5 seconds
+        this.badGuyShotEffects.push({
+            x,
+            y,
+            creationTime: Date.now(),
+            duration: DURATION
+        });
+    }
+
+    processBadGuyShotEffects() {
+        const currentTime = Date.now();
+        this.badGuyShotEffects = this.badGuyShotEffects.filter(effect => {
+            return currentTime - effect.creationTime < effect.duration;
+        });
     }
 }
 

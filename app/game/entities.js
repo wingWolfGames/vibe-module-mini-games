@@ -150,7 +150,7 @@ class BadGuy extends Character {
             this.nextShotTime = Date.now() + this.reloadTime; // Set next shot time
             this.timeToFlash = this.nextShotTime - this.tellDuration; // Set time to flash for next shot
             this.startFlashing(); // Start flashing for the next shot
-            return true; // Indicate that the bad guy shot
+            return { shot: true, x: this.x + this.width / 2, y: this.y + this.height / 2 }; // Indicate that the bad guy shot and provide coordinates
         }
         return false;
     }
