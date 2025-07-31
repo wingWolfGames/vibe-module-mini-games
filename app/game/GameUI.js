@@ -29,7 +29,7 @@ const GameUI = ({ onRestart }) => {
     }, []);
 
     return (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
             <div style={{
                 position: 'absolute',
                 top: '10px',
@@ -127,7 +127,8 @@ const GameUI = ({ onRestart }) => {
                         style={{
                             padding: '10px 20px',
                             fontSize: '1.2em',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            pointerEvents: 'auto'
                         }}
                     >
                         Restart Game
