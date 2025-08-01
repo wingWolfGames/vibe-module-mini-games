@@ -16,7 +16,8 @@ const GameUI = ({
     onReturnToTitle,
     currentScreen, // New prop for current screen
     onStartIntro, // New prop for starting intro
-    onStartGame // New prop for starting game from intro
+    onStartGame, // New prop for starting game from intro
+    currentLevel // New prop for current level
 }) => {
     return (
         <div style={{
@@ -60,6 +61,7 @@ const GameUI = ({
                 zIndex: 100
             }}>
                 <p style={{ margin: '0', fontSize: '1em' }}>Score: {score}</p>
+                <p style={{ margin: '0', fontSize: '1em' }}>Level: {currentLevel}</p>
             </div>
 
             <div style={{

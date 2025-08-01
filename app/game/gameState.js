@@ -8,6 +8,8 @@ class GameState {
         this.showDoubleTapToShoot = true; // New property for the initial instruction
         this.currentScreen = 'TITLE'; // 'TITLE', 'INTRO', 'PLAYING'
         this.hasGameBeenPlayedOnce = false; // New property to track if game has been played at least once
+        this.currentLevel = 1; // New property for current level
+        this.scoreThresholdForNextLevel = 50; // New property for score threshold to next level
         this.badGuys = [];
         this.goodGuys = [];
         this.unknownGuys = []; // New property for unknown guys
@@ -30,6 +32,8 @@ class GameState {
         this.gameStarted = false;
         this.showDoubleTapToShoot = true; // Reset on game reset
         this.currentScreen = 'TITLE'; // Reset to title screen on game reset
+        this.currentLevel = 1; // Reset current level on game reset
+        this.scoreThresholdForNextLevel = 50; // Reset score threshold on game reset
         this.badGuys = [];
         this.goodGuys = [];
         this.unknownGuys = []; // Reset unknown guys on game reset
@@ -88,6 +92,15 @@ class GameState {
 
     addScore(points) {
         this.score += points;
+        if (this.score >= this.scoreThresholdForNextLevel) {
+            this.currentLevel++;
+            // For now, assuming 4 levels based on backgroundImages array in gameCanvas.js
+            // In the future, this should be dynamic or configured elsewhere.
+            if (this.currentLevel > 4) { // Assuming 4 levels (1-4)
+                this.currentLevel = 1; // Cycle back to Level 1
+            }
+            this.scoreThresholdForNextLevel += 50; // Increase threshold for next level
+        }
     }
 
     addBadGuy(badGuy) {
@@ -216,6 +229,13 @@ class GameState {
 
     setScreen(screenName) {
         this.currentScreen = screenName;
+    }
+
+    getBackgroundIndexForLevel() {
+        // Assuming backgroundImages array in gameCanvas.js has 4 elements (index 0-3)
+        // Level 1 maps to index 0, Level 2 to index 1, etc.
+        // The modulo operator ensures cycling back to 0 if currentLevel exceeds the array length.
+        return (this.currentLevel - 1) % 4; // Adjust 4 if the number of backgrounds changes
     }
 }
 

@@ -336,13 +336,13 @@ const GameCanvas = () => {
 
         // Load initial background image when component mounts
         const initialBgImage = new Image();
-        initialBgImage.src = backgroundImages[currentBackgroundIndex];
+        initialBgImage.src = backgroundImages[gameState.getBackgroundIndexForLevel()];
         initialBgImage.onload = () => {
             setBackgroundImage(initialBgImage);
             setBackgroundOpacity(1); // Ensure it's visible
         };
         initialBgImage.onerror = (err) => {
-            console.error(`Failed to load initial background image ${backgroundImages[currentBackgroundIndex]}:`, err);
+            console.error(`Failed to load initial background image ${backgroundImages[gameState.getBackgroundIndexForLevel()]}:`, err);
         };
 
         const container = canvas.parentElement;
@@ -395,10 +395,6 @@ const GameCanvas = () => {
                 }
             }, 15000);
 
-            if (backgroundChangeInterval.current) clearInterval(backgroundChangeInterval.current);
-            backgroundChangeInterval.current = setInterval(() => {
-                setCurrentBackgroundIndex(prevIndex => (prevIndex + 1) % backgroundImages.length);
-            }, 5000);
         } else {
             // If game is not active, clear all intervals
             if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
@@ -427,16 +423,17 @@ const GameCanvas = () => {
     }, [gameActive, gameLoop, spawnRandomNPC]);
 
     // This useEffect handles the loading of the new background image whenever the index changes.
+    // This useEffect handles the loading of the new background image whenever the level changes.
     useEffect(() => {
         const newBgImage = new Image();
-        newBgImage.src = backgroundImages[currentBackgroundIndex];
+        newBgImage.src = backgroundImages[gameState.getBackgroundIndexForLevel()];
         newBgImage.onload = () => {
             setBackgroundImage(newBgImage);
         };
         newBgImage.onerror = (err) => {
-            console.error(`Failed to load background image ${backgroundImages[currentBackgroundIndex]}:`, err);
+            console.error(`Failed to load background image ${backgroundImages[gameState.getBackgroundIndexForLevel()]}:`, err);
         };
-    }, [currentBackgroundIndex]);
+    }, [gameState.currentLevel]); // Depend on gameState.currentLevel
 
     useEffect(() => {
         if (gameOver) {
@@ -460,6 +457,7 @@ const GameCanvas = () => {
                 currentScreen={currentScreen} // Pass current screen state
                 onStartIntro={startIntro} // Pass start intro function
                 onStartGame={startGame} // Pass start game function
+                currentLevel={gameState.currentLevel} // Pass current level state
             />
         </div>
     );
