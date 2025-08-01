@@ -116,7 +116,7 @@ const GameCanvas = () => {
                         newBadGuy.timeToFlash = newBadGuy.nextShotTime - newBadGuy.tellDuration;
                         gameState.addBadGuy(newBadGuy);
                     } else {
-                        const newGoodGuy = new GoodGuy(transformResult.x, transformResult.y, transformResult.width, transformResult.height, transformResult.direction);
+                        const newGoodGuy = new GoodGuy(transformResult.x, transformResult.y, 80, 80, canvas.width, transformResult.direction);
                         newGoodGuy.canvasWidth = canvas.width;
                         gameState.addGoodGuy(newGoodGuy);
                     }
@@ -157,8 +157,8 @@ const GameCanvas = () => {
                 if (goodGuySprite) {
                     // Calculate aspect ratio and new dimensions
                     const aspectRatio = goodGuySprite.width / goodGuySprite.height;
-                    let newWidth = 50;
-                    let newHeight = 50;
+                    let newWidth = 80;
+                    let newHeight = 80;
 
                     if (aspectRatio > 1) { // Wider than tall
                         newHeight = newWidth / aspectRatio;
@@ -248,7 +248,7 @@ const GameCanvas = () => {
         if (npcType < 0.75) { // 75% chance for BadGuy
             gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction));
         } else if (npcType < 0.85) { // 10% chance for GoodGuy (0.75 to 0.85)
-            const goodGuy = new GoodGuy(x, y, width, height, canvas.width, direction);
+            const goodGuy = new GoodGuy(x, y, 80, 80, canvas.width, direction);
             gameState.addGoodGuy(goodGuy);
         } else { // 15% chance for UnknownGuy (0.85 to 1.0)
             const unknownGuy = new UnknownGuy(x, y, width, height, canvas.width, direction);
