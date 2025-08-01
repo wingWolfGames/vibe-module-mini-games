@@ -21,6 +21,18 @@ const GameCanvas = () => {
         '/npc/Lin.png',
         '/npc/Jonathan.png',
     ];
+    const badGuyImagePaths = [
+        '/npc/Sophia.png',
+        '/npc/Emily.png',
+        '/npc/James.png',
+        '/npc/Charles.png',
+        '/npc/Ethan.png',
+        '/npc/Kevin.png',
+        '/npc/Sam.png',
+        '/npc/arlo.png',
+        '/npc/anya.png',
+        '/npc/anna.png',
+    ];
     // Removed goodGuySprite state as each GoodGuy will load its own image
     const [lifeUpSprite, setLifeUpSprite] = useState(null); // State for LifeUp sprite
     const [gameStarted, setGameStarted] = useState(false);
@@ -115,7 +127,8 @@ const GameCanvas = () => {
                     // Transform into GoodGuy or BadGuy
                     const isBadGuy = Math.random() < 0.5; // 50% chance to become BadGuy
                     if (isBadGuy) {
-                        const newBadGuy = new BadGuy(transformResult.x, transformResult.y, transformResult.width, transformResult.height, canvas.width, transformResult.direction);
+                        const randomBadGuyImagePath = badGuyImagePaths[Math.floor(Math.random() * badGuyImagePaths.length)];
+                        const newBadGuy = new BadGuy(transformResult.x, transformResult.y, transformResult.width, transformResult.height, canvas.width, transformResult.direction, randomBadGuyImagePath);
                         // Adjust speed and shooting frequency for transformed BadGuy
                         newBadGuy.speed *= 1.5; // Walk a bit faster
                         newBadGuy.reloadTime /= 2; // Shoot more frequently
@@ -123,7 +136,8 @@ const GameCanvas = () => {
                         newBadGuy.timeToFlash = newBadGuy.nextShotTime - newBadGuy.tellDuration;
                         gameState.addBadGuy(newBadGuy);
                     } else {
-                        const newGoodGuy = new GoodGuy(transformResult.x, transformResult.y, 80, 80, canvas.width, transformResult.direction);
+                        const randomGoodGuyImagePath = goodGuyImagePaths[Math.floor(Math.random() * goodGuyImagePaths.length)];
+                        const newGoodGuy = new GoodGuy(transformResult.x, transformResult.y, 80, 80, canvas.width, transformResult.direction, randomGoodGuyImagePath);
                         newGoodGuy.canvasWidth = canvas.width;
                         gameState.addGoodGuy(newGoodGuy);
                     }
@@ -156,8 +170,30 @@ const GameCanvas = () => {
             gameState.lifeUps = gameState.lifeUps.filter(lu => lu.isAlive); // Filter out collected or expired life-ups
 
             gameState.badGuys.forEach(badGuy => {
-                ctx.fillStyle = (badGuy.flashing && badGuy.flashCount % 2 === 0) ? 'orange' : 'red';
-                ctx.fillRect(badGuy.x, badGuy.y, badGuy.width, badGuy.height);
+                const randomBadGuyImagePath = badGuyImagePaths[Math.floor(Math.random() * badGuyImagePaths.length)];
+                if (!badGuy.image) { // Load image only once
+                    badGuy.image = new Image();
+                    badGuy.image.src = randomBadGuyImagePath;
+                    badGuy.image.onerror = (err) => {
+                        console.error(`Failed to load BadGuy image ${randomBadGuyImagePath}:`, err);
+                    };
+                }
+
+                if (badGuy.image && badGuy.image.complete) {
+                    const aspectRatio = badGuy.image.width / badGuy.image.height;
+                    let newWidth = 80;
+                    let newHeight = 80;
+
+                    if (aspectRatio > 1) { // Wider than tall
+                        newHeight = newWidth / aspectRatio;
+                    } else if (aspectRatio < 1) { // Taller than wide
+                        newWidth = newHeight * aspectRatio;
+                    }
+                    ctx.drawImage(badGuy.image, badGuy.x, badGuy.y, newWidth, newHeight);
+                } else {
+                    ctx.fillStyle = (badGuy.flashing && badGuy.flashCount % 2 === 0) ? 'orange' : 'red';
+                    ctx.fillRect(badGuy.x, badGuy.y, badGuy.width, badGuy.height);
+                }
             });
 
             gameState.goodGuys.forEach(goodGuy => {
@@ -181,8 +217,10 @@ const GameCanvas = () => {
             });
 
             gameState.unknownGuys.forEach(unknownGuy => {
+                ctx.beginPath();
+                ctx.arc(unknownGuy.x + unknownGuy.width / 2, unknownGuy.y + unknownGuy.height / 2, 40, 0, Math.PI * 2); // 80x80 circle, so radius is 40
                 ctx.fillStyle = 'gray';
-                ctx.fillRect(unknownGuy.x, unknownGuy.y, unknownGuy.width, unknownGuy.height);
+                ctx.fill();
             });
 
             // Draw LifeUp power-ups
@@ -255,12 +293,13 @@ const GameCanvas = () => {
         // Randomly select a GoodGuy image path
         const randomGoodGuyImagePath = goodGuyImagePaths[Math.floor(Math.random() * goodGuyImagePaths.length)];
 
-        if (npcType < 0.75) { // 75% chance for BadGuy
-            gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction));
-        } else if (npcType < 0.85) { // 10% chance for GoodGuy (0.75 to 0.85)
+        if (npcType < 0.40) { // 40% chance for BadGuy
+            const randomBadGuyImagePath = badGuyImagePaths[Math.floor(Math.random() * badGuyImagePaths.length)];
+            gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction, randomBadGuyImagePath));
+        } else if (npcType < 0.50) { // 10% chance for GoodGuy (0.40 to 0.50)
             const goodGuy = new GoodGuy(x, y, 80, 80, canvas.width, direction, randomGoodGuyImagePath);
             gameState.addGoodGuy(goodGuy);
-        } else { // 15% chance for UnknownGuy (0.85 to 1.0)
+        } else { // 50% chance for UnknownGuy (0.50 to 1.0)
             const unknownGuy = new UnknownGuy(x, y, width, height, canvas.width, direction);
             gameState.addUnknownGuy(unknownGuy);
         }

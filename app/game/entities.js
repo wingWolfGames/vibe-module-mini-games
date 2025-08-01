@@ -116,8 +116,8 @@ class Character {
 }
 
 class BadGuy extends Character {
-    constructor(x, y, width, height, canvasWidth, direction) {
-        super(x, y, width, height, 'bad', direction);
+    constructor(x, y, width, height, canvasWidth, direction, imagePath) {
+        super(x, y, width, height, 'bad', canvasWidth, direction);
         this.lastShotTime = 0;
         this.reloadTime = (Math.random() * 2000) + 1000; // Random reload time between 1-3 seconds
         this.nextShotTime = Date.now() + (Math.random() * 3000) + 2000; // Initial random shot time
@@ -130,6 +130,11 @@ class BadGuy extends Character {
         this.timeToFlash = this.nextShotTime - this.tellDuration; // Start flashing before first shot
         this.canvasWidth = canvasWidth;
         this.hasShotOnScreen = false; // New property to track if the bad guy has shot while on screen
+        this.image = new Image();
+        this.image.src = imagePath;
+        this.image.onerror = (err) => {
+            console.error(`Failed to load BadGuy image ${imagePath}:`, err);
+        };
     }
 
     startFlashing() {
