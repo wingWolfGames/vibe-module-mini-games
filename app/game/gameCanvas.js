@@ -20,6 +20,8 @@ const GameCanvas = () => {
         '/npc/Wong.png',
         '/npc/Lin.png',
         '/npc/Jonathan.png',
+        '/npc/Zephyr.png',
+        '/npc/Leonard.png',
     ];
     const badGuyImagePaths = [
         '/npc/Sophia.png',
@@ -293,13 +295,13 @@ const GameCanvas = () => {
         // Randomly select a GoodGuy image path
         const randomGoodGuyImagePath = goodGuyImagePaths[Math.floor(Math.random() * goodGuyImagePaths.length)];
 
-        if (npcType < 0.40) { // 40% chance for BadGuy
+        if (npcType < 0.75) { // 75% chance for BadGuy
             const randomBadGuyImagePath = badGuyImagePaths[Math.floor(Math.random() * badGuyImagePaths.length)];
             gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction, randomBadGuyImagePath));
-        } else if (npcType < 0.50) { // 10% chance for GoodGuy (0.40 to 0.50)
+        } else if (npcType < 0.85) { // 10% chance for GoodGuy (0.75 to 0.85)
             const goodGuy = new GoodGuy(x, y, 80, 80, canvas.width, direction, randomGoodGuyImagePath);
             gameState.addGoodGuy(goodGuy);
-        } else { // 50% chance for UnknownGuy (0.50 to 1.0)
+        } else { // 15% chance for UnknownGuy (0.85 to 1.0)
             const unknownGuy = new UnknownGuy(x, y, width, height, canvas.width, direction);
             gameState.addUnknownGuy(unknownGuy);
         }
