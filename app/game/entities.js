@@ -210,8 +210,13 @@ class BadGuy extends Character {
 }
 
 class GoodGuy extends Character {
-    constructor(x, y, width, height, canvasWidth, direction) {
+    constructor(x, y, width, height, canvasWidth, direction, imagePath) {
         super(x, y, width, height, 'good', canvasWidth, direction);
+        this.image = new Image();
+        this.image.src = imagePath;
+        this.image.onerror = (err) => {
+            console.error(`Failed to load GoodGuy image ${imagePath}:`, err);
+        };
     }
 
     update(deltaTime) {

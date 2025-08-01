@@ -14,7 +14,14 @@ const GameCanvas = () => {
     const reloadTimeoutId = useRef(null); // New ref for reload timeout
 
     // Centralized UI State (now managed by gameState.currentScreen)
-    const [goodGuySprite, setGoodGuySprite] = useState(null); // State for GoodGuy sprite
+    // Define GoodGuy image paths outside the component to avoid re-creation on every render
+    const goodGuyImagePaths = [
+        '/npc/Trevor.png',
+        '/npc/Wong.png',
+        '/npc/Lin.png',
+        '/npc/Jonathan.png',
+    ];
+    // Removed goodGuySprite state as each GoodGuy will load its own image
     const [lifeUpSprite, setLifeUpSprite] = useState(null); // State for LifeUp sprite
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
@@ -154,19 +161,19 @@ const GameCanvas = () => {
             });
 
             gameState.goodGuys.forEach(goodGuy => {
-                if (goodGuySprite) {
+                if (goodGuy.image && goodGuy.image.complete) {
                     // Calculate aspect ratio and new dimensions
-                    const aspectRatio = goodGuySprite.width / goodGuySprite.height;
+                    const aspectRatio = goodGuy.image.width / goodGuy.image.height;
                     let newWidth = 80;
                     let newHeight = 80;
-
+ 
                     if (aspectRatio > 1) { // Wider than tall
                         newHeight = newWidth / aspectRatio;
                     } else if (aspectRatio < 1) { // Taller than wide
                         newWidth = newHeight * aspectRatio;
                     }
-
-                    ctx.drawImage(goodGuySprite, goodGuy.x, goodGuy.y, newWidth, newHeight);
+ 
+                    ctx.drawImage(goodGuy.image, goodGuy.x, goodGuy.y, newWidth, newHeight);
                 } else {
                     ctx.fillStyle = 'blue';
                     ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
@@ -244,11 +251,14 @@ const GameCanvas = () => {
         const height = 50;
         let x = fromLeft ? -width : canvas.width;
         let direction = fromLeft ? 1 : -1;
+ 
+        // Randomly select a GoodGuy image path
+        const randomGoodGuyImagePath = goodGuyImagePaths[Math.floor(Math.random() * goodGuyImagePaths.length)];
 
         if (npcType < 0.75) { // 75% chance for BadGuy
             gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction));
         } else if (npcType < 0.85) { // 10% chance for GoodGuy (0.75 to 0.85)
-            const goodGuy = new GoodGuy(x, y, 80, 80, canvas.width, direction);
+            const goodGuy = new GoodGuy(x, y, 80, 80, canvas.width, direction, randomGoodGuyImagePath);
             gameState.addGoodGuy(goodGuy);
         } else { // 15% chance for UnknownGuy (0.85 to 1.0)
             const unknownGuy = new UnknownGuy(x, y, width, height, canvas.width, direction);
@@ -302,15 +312,7 @@ const GameCanvas = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Load GoodGuy sprite
-        const trevorSprite = new Image();
-        trevorSprite.src = '/npc/Trevor.png'; // Path relative to public directory
-        trevorSprite.onload = () => {
-            setGoodGuySprite(trevorSprite);
-        };
-        trevorSprite.onerror = (err) => {
-            console.error("Failed to load Trevor.png:", err);
-        };
+        // GoodGuy sprite loading moved to GoodGuy class
 
         // Load LifeUp sprite
         const lifeUpImage = new Image();
