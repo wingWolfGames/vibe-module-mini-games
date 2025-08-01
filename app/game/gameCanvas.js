@@ -38,6 +38,7 @@ const GameCanvas = () => {
     ];
     // Removed goodGuySprite state as each GoodGuy will load its own image
     const [lifeUpSprite, setLifeUpSprite] = useState(null); // State for LifeUp sprite
+    const [backgroundImage, setBackgroundImage] = useState(null); // State for background image
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameActive, setGameActive] = useState(false); // New state for active game
@@ -83,6 +84,25 @@ const GameCanvas = () => {
 
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw background image if loaded and game is playing
+        if (backgroundImage && gameState.currentScreen === 'PLAYING') {
+            const imgAspectRatio = backgroundImage.width / backgroundImage.height;
+            const canvasAspectRatio = canvas.width / canvas.height;
+
+            let drawWidth;
+            let drawHeight;
+            let drawX;
+            let drawY;
+
+            // Fit height and center horizontally
+            drawHeight = canvas.height;
+            drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
+            drawX = (canvas.width - drawWidth) / 2;
+            drawY = 0;
+
+            ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+        }
 
         try {
             let shakeX = 0;
@@ -376,6 +396,16 @@ const GameCanvas = () => {
         };
         lifeUpImage.onerror = (err) => {
             console.error("Failed to load heartplus.png:", err);
+        };
+
+        // Load background image
+        const bgImage = new Image();
+        bgImage.src = '/backgrounds/subway_bg2.png'; // Corrected path
+        bgImage.onload = () => {
+            setBackgroundImage(bgImage);
+        };
+        bgImage.onerror = (err) => {
+            console.error("Failed to load subway_bg2.png:", err);
         };
 
         const container = canvas.parentElement;
