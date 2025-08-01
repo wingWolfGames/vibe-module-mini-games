@@ -12,6 +12,7 @@ const GameCanvas = () => {
     const animationFrameId = useRef(null);
     const spawnIntervalId = useRef(null);
     const reloadTimeoutId = useRef(null); // New ref for reload timeout
+    const lifeUpSpawnIntervalId = useRef(null); // New ref for LifeUp spawn interval
 
     // Centralized UI State (now managed by gameState.currentScreen)
     // Define GoodGuy image paths outside the component to avoid re-creation on every render
@@ -330,6 +331,16 @@ const GameCanvas = () => {
         if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
         spawnIntervalId.current = setInterval(spawnRandomNPC, 2000);
 
+        if (lifeUpSpawnIntervalId.current) clearInterval(lifeUpSpawnIntervalId.current);
+        lifeUpSpawnIntervalId.current = setInterval(() => {
+            const canvas = canvasRef.current;
+            if (canvas && gameState.lifeUps.length === 0) { // Only spawn if no LifeUp is currently active
+                const randomX = Math.random() * (canvas.width - 64);
+                const randomY = Math.random() * (canvas.height - 64);
+                gameState.addLifeUp(new LifeUp(randomX, randomY, 64, 64));
+            }
+        }, 15000); // Spawn every 15 seconds
+
         if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current); // Clear any pending reload timeout
     }, [gameLoop, spawnRandomNPC]);
 
@@ -345,6 +356,8 @@ const GameCanvas = () => {
 
         if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
         spawnIntervalId.current = null;
+        if (lifeUpSpawnIntervalId.current) clearInterval(lifeUpSpawnIntervalId.current); // Clear LifeUp spawn interval
+        lifeUpSpawnIntervalId.current = null;
         if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
         if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current); // Clear any pending reload timeout
     }, []);
@@ -402,12 +415,21 @@ const GameCanvas = () => {
 
         if (gameStarted) {
             spawnIntervalId.current = setInterval(spawnRandomNPC, 2000);
+            lifeUpSpawnIntervalId.current = setInterval(() => {
+                const canvas = canvasRef.current;
+                if (canvas && gameState.lifeUps.length === 0) { // Only spawn if no LifeUp is currently active
+                    const randomX = Math.random() * (canvas.width - 64);
+                    const randomY = Math.random() * (canvas.height - 64);
+                    gameState.addLifeUp(new LifeUp(randomX, randomY, 64, 64));
+                }
+            }, 15000); // Spawn every 15 seconds
         }
 
         return () => {
             window.removeEventListener('resize', resizeCanvas);
             if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
             if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
+            if (lifeUpSpawnIntervalId.current) clearInterval(lifeUpSpawnIntervalId.current); // Clear LifeUp spawn interval
             if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current);
             const ih = inputHandlerRef.current;
             if (ih) {
