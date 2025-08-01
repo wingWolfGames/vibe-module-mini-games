@@ -35,7 +35,6 @@ const GameCanvas = () => {
     const [currentScreen, setCurrentScreen] = useState(gameState.currentScreen); // Use gameState for current screen
     const [lives, setLives] = useState(gameState.playerLives);
     useEffect(() => {
-        console.log('gameActive changed:', gameActive);
     }, [gameActive]);
     const [ammo, setAmmo] = useState(gameState.playerAmmo);
     const [score, setScore] = useState(gameState.score);
@@ -94,6 +93,7 @@ const GameCanvas = () => {
                 ctx.translate(shakeX, shakeY);
 
                 gameState.processHitCircles();
+                gameState.processBadGuyShotEffects(); // Moved here to ensure damage is applied before filtering
                 gameState.badGuys.forEach(badGuy => {
                     const shotResult = badGuy.update(performance.now());
                     if (shotResult && shotResult.shot && !gameState.gameOver) {
@@ -151,6 +151,9 @@ const GameCanvas = () => {
                 gameState.lifeUps = gameState.lifeUps.filter(lu => lu.isAlive);
                 gameState.badGuys.forEach(badGuy => {
                     const randomBadGuyImagePath = badGuyImagePaths[Math.floor(Math.random() * badGuyImagePaths.length)];
+                    let newWidth = 80;
+                    let newHeight = 80; // Declare newHeight here to ensure it's always in scope
+
                     if (!badGuy.image) {
                         badGuy.image = new Image();
                         badGuy.image.src = randomBadGuyImagePath;
@@ -158,13 +161,17 @@ const GameCanvas = () => {
                     }
                     if (badGuy.image && badGuy.image.complete) {
                         const aspectRatio = badGuy.image.width / badGuy.image.height;
-                        let newWidth = 80, newHeight = 80;
                         if (aspectRatio > 1) newHeight = newWidth / aspectRatio;
                         else if (aspectRatio < 1) newWidth = newHeight * aspectRatio;
                         ctx.drawImage(badGuy.image, badGuy.x, badGuy.y, newWidth, newHeight);
                     } else {
                         ctx.fillStyle = (badGuy.flashing && badGuy.flashCount % 2 === 0) ? 'orange' : 'red';
                         ctx.fillRect(badGuy.x, badGuy.y, badGuy.width, badGuy.height);
+                        newHeight = badGuy.height; // Ensure newHeight is set even if image not loaded
+                    }
+                    // Draw lower body GIF if loaded
+                    if (badGuy.lowerBodyImage && badGuy.lowerBodyImage.complete) {
+                        ctx.drawImage(badGuy.lowerBodyImage, badGuy.x, badGuy.y + newHeight, 80, 80);
                     }
                 });
                 gameState.goodGuys.forEach(goodGuy => {
@@ -199,10 +206,6 @@ const GameCanvas = () => {
                     const maxRadius = Math.max(canvas.width, canvas.height);
                     const currentRadius = Math.max(0, maxRadius * progress);
                     const opacity = Math.max(0, 1 - progress);
-                    if (progress >= 1 && !effect.damageApplied) {
-                        gameState.loseLife(true);
-                        effect.damageApplied = true;
-                    }
                     ctx.beginPath();
                     ctx.arc(effect.x, effect.y, currentRadius, 0, Math.PI * 2);
                     ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`;
@@ -243,7 +246,6 @@ const GameCanvas = () => {
         animationFrameId.current = requestAnimationFrame(gameLoop);
     }, []);
 
-    gameState.processBadGuyShotEffects(); // Moved here to ensure damage is applied before filtering
 
     const spawnRandomNPC = useCallback(() => {
         const canvas = canvasRef.current;

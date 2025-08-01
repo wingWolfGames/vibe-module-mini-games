@@ -156,6 +156,7 @@ class GameState {
             // Check collision with bad guys
             this.badGuys.forEach(badGuy => {
                 if (badGuy.isAlive && badGuy.isHit(circle.x, circle.y, circle.radius)) {
+                    console.log(`HitCircle at (${circle.x}, ${circle.y}) hit BadGuy at (${badGuy.x}, ${badGuy.y})`);
                     badGuy.takeDamage(1);
                     if (!badGuy.isAlive) {
                         this.addScore(10); // Score for hitting a bad guy
@@ -166,6 +167,7 @@ class GameState {
             // Check collision with good guys
             this.goodGuys.forEach(goodGuy => {
                 if (goodGuy.isAlive && goodGuy.isHit(circle.x, circle.y, circle.radius)) {
+                    console.log(`HitCircle at (${circle.x}, ${circle.y}) hit GoodGuy at (${goodGuy.x}, ${goodGuy.y})`);
                     goodGuy.takeDamage(1);
                     if (!goodGuy.isAlive) {
                         this.loseLife(); // Lose life for hitting a good guy
@@ -176,6 +178,7 @@ class GameState {
             // Check collision with unknown guys
             this.unknownGuys.forEach(unknownGuy => {
                 if (unknownGuy.isAlive && unknownGuy.isHit(circle.x, circle.y, circle.radius)) {
+                    console.log(`HitCircle at (${circle.x}, ${circle.y}) hit UnknownGuy at (${unknownGuy.x}, ${unknownGuy.y})`);
                     unknownGuy.takeDamage(1);
                     if (!unknownGuy.isAlive) {
                         this.loseLife(); // Lose life for hitting an unknown guy
@@ -186,6 +189,7 @@ class GameState {
             // Check collision with LifeUp power-ups
             this.lifeUps.forEach(lifeUp => {
                 if (lifeUp.isAlive && lifeUp.isHit(circle.x, circle.y, circle.radius)) {
+                    console.log(`HitCircle at (${circle.x}, ${circle.y}) hit LifeUp at (${lifeUp.x}, ${lifeUp.y})`);
                     this.addLife(1); // Add 1 life to the player
                     lifeUp.isAlive = false; // Mark power-up for removal
                 }
@@ -201,6 +205,7 @@ class GameState {
 
     createBadGuyShotEffect(x, y) {
         const DURATION = 500; // 0.5 seconds
+        console.log(`Creating BadGuyShotEffect at (${x}, ${y}) at ${performance.now()}`); // Log shot effect creation
         this.badGuyShotEffects.push({
             x,
             y,
@@ -211,8 +216,16 @@ class GameState {
     }
 
     processBadGuyShotEffects() {
+        console.log(`Processing BadGuyShotEffects at ${performance.now()}. Number of effects: ${this.badGuyShotEffects.length}`);
         const currentTime = performance.now();
         this.badGuyShotEffects = this.badGuyShotEffects.filter(effect => {
+            // If the effect has expired and damage hasn't been applied, apply damage
+            if (currentTime - effect.creationTime >= effect.duration && !effect.damageApplied) {
+                console.log(`Applying damage from BadGuyShotEffect at (${effect.x}, ${effect.y}). Player lives before: ${this.playerLives}`);
+                this.loseLife(true);
+                effect.damageApplied = true; // Mark damage as applied
+                console.log(`Player lives after: ${this.playerLives}`);
+            }
             return currentTime - effect.creationTime < effect.duration;
         });
     }

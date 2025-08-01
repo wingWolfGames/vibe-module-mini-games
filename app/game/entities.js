@@ -135,6 +135,13 @@ class BadGuy extends Character {
         this.image.onerror = (err) => {
             console.error(`Failed to load BadGuy image ${imagePath}:`, err);
         };
+        this.lowerBodyImage = new Image();
+        this.lowerBodyImage.src = 'sprite/bad.gif'; // Corrected path
+        this.lowerBodyImage.onload = () => {
+        };
+        this.lowerBodyImage.onerror = (err) => {
+            console.error(`Failed to load BadGuy lower body image sprite/bad.gif:`, err);
+        };
     }
 
     startFlashing() {
@@ -208,6 +215,7 @@ class BadGuy extends Character {
             this.nextShotTime = Date.now() + this.reloadTime; // Set next shot time
             this.timeToFlash = this.nextShotTime - this.tellDuration; // Set time to flash for next shot
             this.startFlashing(); // Start flashing for the next shot
+            console.log(`BadGuy at (${this.x}, ${this.y}) shot at ${Date.now()}`); // Log bad guy shot
             return { shot: true, x: this.x + this.width / 2, y: this.y + this.height / 2 }; // Indicate that the bad guy shot and provide coordinates
         }
         return false;
