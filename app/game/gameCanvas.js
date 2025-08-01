@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import InputHandler from './inputHandler';
 import gameState from './gameState';
-import { Player, BadGuy, GoodGuy, UnknownGuy } from './entities';
+import { Player, BadGuy, GoodGuy, UnknownGuy, LifeUp } from './entities';
 import GameUI from './GameUI';
 import TitleScreen from '../../components/TitleScreen';
 
@@ -15,6 +15,7 @@ const GameCanvas = () => {
 
     // Centralized UI State (now managed by gameState.currentScreen)
     const [goodGuySprite, setGoodGuySprite] = useState(null); // State for GoodGuy sprite
+    const [lifeUpSprite, setLifeUpSprite] = useState(null); // State for LifeUp sprite
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameActive, setGameActive] = useState(false); // New state for active game
@@ -51,6 +52,7 @@ const GameCanvas = () => {
             gameState.badGuys = [];
             gameState.goodGuys = [];
             gameState.unknownGuys = []; // Clear unknown guys on game over
+            gameState.lifeUps = []; // Clear life-ups on game over
             gameState.hitCircles = [];
             gameState.badGuyShotEffects = [];
             animationFrameId.current = requestAnimationFrame(gameLoop);
@@ -83,7 +85,21 @@ const GameCanvas = () => {
                 }
             });
 
-            gameState.goodGuys.forEach(goodGuy => goodGuy.update(performance.now()));
+            gameState.goodGuys.forEach(goodGuy => {
+                goodGuy.update(performance.now());
+                // Check if a good guy has successfully crossed the screen
+                if (!goodGuy.isAlive && goodGuy.hasCrossedScreen) {
+                    // If no life-up is currently active, spawn one
+                    if (gameState.lifeUps.length === 0) {
+                        const canvas = canvasRef.current;
+                        if (canvas) {
+                            const randomX = Math.random() * (canvas.width - 64); // Random X within canvas bounds
+                            const randomY = Math.random() * (canvas.height - 64); // Random Y within canvas bounds
+                            gameState.addLifeUp(new LifeUp(randomX, randomY, 64, 64));
+                        }
+                    }
+                }
+            });
 
             // Update and handle UnknownGuys
             gameState.unknownGuys.forEach(unknownGuy => {
@@ -106,11 +122,31 @@ const GameCanvas = () => {
                     }
                     unknownGuy.isAlive = false; // Mark unknown guy for removal
                 }
+                // Check if a transformed unknown guy (now good guy) has successfully crossed the screen
+                if (!unknownGuy.isAlive && unknownGuy.hasCrossedScreen && unknownGuy.transformed) {
+                    // If no life-up is currently active, spawn one
+                    if (gameState.lifeUps.length === 0) {
+                        const canvas = canvasRef.current;
+                        if (canvas) {
+                            const randomX = Math.random() * (canvas.width - 64); // Random X within canvas bounds
+                            const randomY = Math.random() * (canvas.height - 64); // Random Y within canvas bounds
+                            gameState.addLifeUp(new LifeUp(randomX, randomY, 64, 64));
+                        }
+                    }
+                }
             });
+
+            // Update LifeUp power-ups
+            gameState.lifeUps.forEach(lifeUp => {
+                lifeUp.update(performance.now());
+            });
+
+
 
             gameState.badGuys = gameState.badGuys.filter(bg => bg.isAlive);
             gameState.goodGuys = gameState.goodGuys.filter(gg => gg.isAlive);
             gameState.unknownGuys = gameState.unknownGuys.filter(ug => ug.isAlive); // Filter out transformed unknown guys
+            gameState.lifeUps = gameState.lifeUps.filter(lu => lu.isAlive); // Filter out collected or expired life-ups
 
             gameState.badGuys.forEach(badGuy => {
                 ctx.fillStyle = (badGuy.flashing && badGuy.flashCount % 2 === 0) ? 'orange' : 'red';
@@ -140,6 +176,16 @@ const GameCanvas = () => {
             gameState.unknownGuys.forEach(unknownGuy => {
                 ctx.fillStyle = 'gray';
                 ctx.fillRect(unknownGuy.x, unknownGuy.y, unknownGuy.width, unknownGuy.height);
+            });
+
+            // Draw LifeUp power-ups
+            gameState.lifeUps.forEach(lifeUp => {
+                if (lifeUpSprite) {
+                    ctx.drawImage(lifeUpSprite, lifeUp.x, lifeUp.y, lifeUp.width, lifeUp.height);
+                } else {
+                    ctx.fillStyle = 'purple'; // Fallback color if sprite not loaded
+                    ctx.fillRect(lifeUp.x, lifeUp.y, lifeUp.width, lifeUp.height);
+                }
             });
 
             gameState.badGuyShotEffects.forEach(effect => {
@@ -202,12 +248,10 @@ const GameCanvas = () => {
         if (npcType < 0.75) { // 75% chance for BadGuy
             gameState.addBadGuy(new BadGuy(x, y, width, height, canvas.width, direction));
         } else if (npcType < 0.85) { // 10% chance for GoodGuy (0.75 to 0.85)
-            const goodGuy = new GoodGuy(x, y, width, height, direction);
-            goodGuy.canvasWidth = canvas.width;
+            const goodGuy = new GoodGuy(x, y, width, height, canvas.width, direction);
             gameState.addGoodGuy(goodGuy);
         } else { // 15% chance for UnknownGuy (0.85 to 1.0)
-            const unknownGuy = new UnknownGuy(x, y, width, height, direction);
-            unknownGuy.canvasWidth = canvas.width;
+            const unknownGuy = new UnknownGuy(x, y, width, height, canvas.width, direction);
             gameState.addUnknownGuy(unknownGuy);
         }
     }, []);
@@ -266,6 +310,16 @@ const GameCanvas = () => {
         };
         trevorSprite.onerror = (err) => {
             console.error("Failed to load Trevor.png:", err);
+        };
+
+        // Load LifeUp sprite
+        const lifeUpImage = new Image();
+        lifeUpImage.src = '/heart/heartplus.png'; // Path relative to public directory
+        lifeUpImage.onload = () => {
+            setLifeUpSprite(lifeUpImage);
+        };
+        lifeUpImage.onerror = (err) => {
+            console.error("Failed to load heartplus.png:", err);
         };
 
         const container = canvas.parentElement;

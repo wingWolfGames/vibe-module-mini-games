@@ -27,7 +27,7 @@ class Player {
 }
 
 class Character {
-    constructor(x, y, width, height, type, direction = 1) {
+    constructor(x, y, width, height, type, canvasWidth, direction = 1) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -39,9 +39,11 @@ class Character {
         this.speed = (Math.random() * 1.5) + 1; // Random speed between 1 and 2.5
         this.isStopped = false;
         this.stopTime = 0;
+        this.hasCrossedScreen = false; // New property to track if the character has successfully crossed the screen
         this.resumeTime = 0;
         this.stopDuration = (Math.random() * 1000) + 1000; // Random stop duration between 1-2 seconds
         this.canStop = Math.random() < 0.3; // 30% chance to have stop-and-go behavior
+        this.canvasWidth = canvasWidth; // Initialize canvasWidth
     }
 
     update(deltaTime) {
@@ -73,8 +75,10 @@ class Character {
         // Mark as not alive if off-screen
         if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
             this.isAlive = false;
+            this.hasCrossedScreen = true; // Mark as crossed if it goes off screen
         } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
             this.isAlive = false;
+            this.hasCrossedScreen = true; // Mark as crossed if it goes off screen
         }
         return false; // Base character doesn't shoot
     }
@@ -206,44 +210,19 @@ class BadGuy extends Character {
 }
 
 class GoodGuy extends Character {
-    constructor(x, y, width, height, direction) {
-        super(x, y, width, height, 'good', direction);
+    constructor(x, y, width, height, canvasWidth, direction) {
+        super(x, y, width, height, 'good', canvasWidth, direction);
     }
 
     update(deltaTime) {
-        if (this.canStop) {
-            if (!this.isStopped && Math.random() < 0.005) { // Small chance to stop each frame
-                this.isStopped = true;
-                this.stopTime = Date.now();
-                this.resumeTime = this.stopTime + this.stopDuration;
-            }
-
-            if (this.isStopped && Date.now() >= this.resumeTime) {
-                this.isStopped = false;
-                this.stopTime = 0;
-                this.resumeTime = 0;
-                this.stopDuration = (Math.random() * 1000) + 1000; // Reset for next stop
-            }
-        }
-
-        // Movement logic
-        if (!this.isStopped) {
-            this.x += this.speed * this.direction;
-        }
-
-        // Mark as not alive if off-screen
-        if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
-            this.isAlive = false;
-        } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
-            this.isAlive = false;
-        }
+        super.update(deltaTime); // Call parent update to handle movement and off-screen logic
         return false; // Good guys don't shoot
     }
 }
 
 class UnknownGuy extends Character {
-    constructor(x, y, width, height, direction) {
-        super(x, y, width, height, 'unknown', direction);
+    constructor(x, y, width, height, canvasWidth, direction) {
+        super(x, y, width, height, 'unknown', canvasWidth, direction);
         this.transformTime = 0;
         this.transformed = false;
         this.canStop = true; // UnknownGuy always has stop-and-go behavior
@@ -251,33 +230,33 @@ class UnknownGuy extends Character {
     }
 
     update(deltaTime) {
-        if (!this.transformed) {
-            if (!this.isStopped && Math.random() < 0.005) { // Small chance to stop each frame
-                this.isStopped = true;
-                this.stopTime = Date.now();
-                this.transformTime = this.stopTime + this.stopDuration; // Set transform time
-            }
+        const superResult = super.update(deltaTime); // Call parent update to handle movement and off-screen logic
 
+        if (!this.transformed) {
             if (this.isStopped && Date.now() >= this.transformTime) {
                 this.transformed = true; // Mark as transformed
                 // Return transformation event to game loop
                 return { transform: true, x: this.x, y: this.y, width: this.width, height: this.height, direction: this.direction };
             }
         }
-
-        // Movement logic
-        if (!this.isStopped) {
-            this.x += this.speed * this.direction;
-        }
-
-        // Mark as not alive if off-screen
-        if (this.direction === 1 && this.x > this.canvasWidth) { // Moving right and off screen
-            this.isAlive = false;
-        } else if (this.direction === -1 && this.x + this.width < 0) { // Moving left and off screen
-            this.isAlive = false;
-        }
-        return false; // Unknown guys don't shoot or have other special updates
+        return superResult || false; // Return super result if any, otherwise false
     }
 }
 
-export { Player, BadGuy, GoodGuy, UnknownGuy };
+class LifeUp extends Character {
+    constructor(x, y, width, height) {
+        super(x, y, width, height, 'powerup');
+        this.creationTime = Date.now();
+        this.lifespan = 3000; // 3 seconds
+    }
+
+    update(deltaTime) {
+        // Power-up does not move, but checks its lifespan
+        if (Date.now() - this.creationTime > this.lifespan) {
+            this.isAlive = false; // Mark for removal if lifespan exceeded
+        }
+        return false; // Power-up doesn't shoot or have other special updates
+    }
+}
+
+export { Player, BadGuy, GoodGuy, UnknownGuy, LifeUp };
