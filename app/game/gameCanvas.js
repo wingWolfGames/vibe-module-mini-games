@@ -14,6 +14,7 @@ const GameCanvas = () => {
     const reloadTimeoutId = useRef(null); // New ref for reload timeout
 
     // Centralized UI State (now managed by gameState.currentScreen)
+    const [goodGuySprite, setGoodGuySprite] = useState(null); // State for GoodGuy sprite
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameActive, setGameActive] = useState(false); // New state for active game
@@ -117,8 +118,23 @@ const GameCanvas = () => {
             });
 
             gameState.goodGuys.forEach(goodGuy => {
-                ctx.fillStyle = 'blue';
-                ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
+                if (goodGuySprite) {
+                    // Calculate aspect ratio and new dimensions
+                    const aspectRatio = goodGuySprite.width / goodGuySprite.height;
+                    let newWidth = 50;
+                    let newHeight = 50;
+
+                    if (aspectRatio > 1) { // Wider than tall
+                        newHeight = newWidth / aspectRatio;
+                    } else if (aspectRatio < 1) { // Taller than wide
+                        newWidth = newHeight * aspectRatio;
+                    }
+
+                    ctx.drawImage(goodGuySprite, goodGuy.x, goodGuy.y, newWidth, newHeight);
+                } else {
+                    ctx.fillStyle = 'blue';
+                    ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
+                }
             });
 
             gameState.unknownGuys.forEach(unknownGuy => {
@@ -241,6 +257,16 @@ const GameCanvas = () => {
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
+
+        // Load GoodGuy sprite
+        const trevorSprite = new Image();
+        trevorSprite.src = '/npc/Trevor.png'; // Path relative to public directory
+        trevorSprite.onload = () => {
+            setGoodGuySprite(trevorSprite);
+        };
+        trevorSprite.onerror = (err) => {
+            console.error("Failed to load Trevor.png:", err);
+        };
 
         const container = canvas.parentElement;
         const resizeCanvas = () => {
