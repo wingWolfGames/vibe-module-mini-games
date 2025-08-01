@@ -46,7 +46,6 @@ const GameCanvas = () => {
         '/backgrounds/wong_bg.png',
         '/backgrounds/cabby_bg.png',
         '/backgrounds/car_bg.png',
-        '/backgrounds/BG_RED_loop.gif',
     ];
     const backgroundFadeTimeout = useRef(null); // New ref for fade timeout
     const backgroundChangeInterval = useRef(null); // New ref for background change interval
