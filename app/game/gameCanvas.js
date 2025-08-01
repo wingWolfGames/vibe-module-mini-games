@@ -39,11 +39,26 @@ const GameCanvas = () => {
     // Removed goodGuySprite state as each GoodGuy will load its own image
     const [lifeUpSprite, setLifeUpSprite] = useState(null); // State for LifeUp sprite
     const [backgroundImage, setBackgroundImage] = useState(null); // State for background image
+    const [backgroundOpacity, setBackgroundOpacity] = useState(1); // New state for background opacity
+    const [currentBackgroundIndex, setCurrentBackgroundIndex] = useState(0); // New state for current background index
+    const backgroundImages = [
+        '/backgrounds/subway_bg2.png',
+        '/backgrounds/wong_bg.png',
+        '/backgrounds/cabby_bg.png',
+        '/backgrounds/car_bg.png',
+        '/backgrounds/BG_RED_loop.gif',
+    ];
+    const backgroundFadeTimeout = useRef(null); // New ref for fade timeout
+    const backgroundChangeInterval = useRef(null); // New ref for background change interval
+
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [gameActive, setGameActive] = useState(false); // New state for active game
     const [currentScreen, setCurrentScreen] = useState(gameState.currentScreen); // Use gameState for current screen
     const [lives, setLives] = useState(gameState.playerLives);
+    useEffect(() => {
+        console.log('gameActive changed:', gameActive);
+    }, [gameActive]);
     const [ammo, setAmmo] = useState(gameState.playerAmmo);
     const [score, setScore] = useState(gameState.score);
     const [showReloadOk, setShowReloadOk] = useState(false);
@@ -84,25 +99,28 @@ const GameCanvas = () => {
 
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+// Draw background image if loaded and game is playing
+if (backgroundImage && gameState.currentScreen === 'PLAYING') {
+    ctx.save();
+    ctx.globalAlpha = backgroundOpacity.current; // Apply current opacity
 
-        // Draw background image if loaded and game is playing
-        if (backgroundImage && gameState.currentScreen === 'PLAYING') {
-            const imgAspectRatio = backgroundImage.width / backgroundImage.height;
-            const canvasAspectRatio = canvas.width / canvas.height;
+    const imgAspectRatio = backgroundImage.width / backgroundImage.height;
+    const canvasAspectRatio = canvas.width / canvas.height;
 
-            let drawWidth;
-            let drawHeight;
-            let drawX;
-            let drawY;
+    let drawWidth;
+    let drawHeight;
+    let drawX;
+    let drawY;
 
-            // Fit height and center horizontally
-            drawHeight = canvas.height;
-            drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
-            drawX = (canvas.width - drawWidth) / 2;
-            drawY = 0;
+    // Fit height and center horizontally
+    drawHeight = canvas.height;
+    drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
+    drawX = (canvas.width - drawWidth) / 2;
+    drawY = 0;
 
-            ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
-        }
+    ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+    ctx.restore(); // Restore context to remove globalAlpha
+}
 
         try {
             let shakeX = 0;
@@ -362,6 +380,8 @@ const GameCanvas = () => {
         }, 15000); // Spawn every 15 seconds
 
         if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current); // Clear any pending reload timeout
+
+        // Background changing logic is now handled in useEffect based on gameActive state
     }, [gameLoop, spawnRandomNPC]);
 
     const handleReturnToTitle = useCallback(() => {
@@ -380,6 +400,10 @@ const GameCanvas = () => {
         lifeUpSpawnIntervalId.current = null;
         if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
         if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current); // Clear any pending reload timeout
+        if (backgroundChangeInterval.current) clearInterval(backgroundChangeInterval.current); // Clear background change interval
+        backgroundChangeInterval.current = null;
+        if (backgroundFadeTimeout.current) clearTimeout(backgroundFadeTimeout.current); // Clear background fade timeout
+        backgroundFadeTimeout.current = null;
     }, []);
 
     useEffect(() => {
@@ -398,14 +422,15 @@ const GameCanvas = () => {
             console.error("Failed to load heartplus.png:", err);
         };
 
-        // Load background image
-        const bgImage = new Image();
-        bgImage.src = '/backgrounds/subway_bg2.png'; // Corrected path
-        bgImage.onload = () => {
-            setBackgroundImage(bgImage);
+        // Load initial background image when component mounts
+        const initialBgImage = new Image();
+        initialBgImage.src = backgroundImages[currentBackgroundIndex];
+        initialBgImage.onload = () => {
+            setBackgroundImage(initialBgImage);
+            setBackgroundOpacity(1); // Ensure it's visible
         };
-        bgImage.onerror = (err) => {
-            console.error("Failed to load subway_bg2.png:", err);
+        initialBgImage.onerror = (err) => {
+            console.error(`Failed to load initial background image ${backgroundImages[currentBackgroundIndex]}:`, err);
         };
 
         const container = canvas.parentElement;
@@ -443,7 +468,7 @@ const GameCanvas = () => {
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
-        if (gameStarted) {
+        if (gameActive) { // Only run intervals when game is active
             spawnIntervalId.current = setInterval(spawnRandomNPC, 2000);
             lifeUpSpawnIntervalId.current = setInterval(() => {
                 const canvas = canvasRef.current;
@@ -453,6 +478,13 @@ const GameCanvas = () => {
                     gameState.addLifeUp(new LifeUp(randomX, randomY, 64, 64));
                 }
             }, 15000); // Spawn every 15 seconds
+
+            // Start background changing logic
+            if (backgroundChangeInterval.current) clearInterval(backgroundChangeInterval.current);
+            backgroundChangeInterval.current = setInterval(() => {
+                console.log('Changing background index...'); // Debug log
+                setCurrentBackgroundIndex(prevIndex => (prevIndex + 1) % backgroundImages.length);
+            }, 5000); // Change background every 5 seconds
         }
 
         return () => {
@@ -461,6 +493,8 @@ const GameCanvas = () => {
             if (spawnIntervalId.current) clearInterval(spawnIntervalId.current);
             if (lifeUpSpawnIntervalId.current) clearInterval(lifeUpSpawnIntervalId.current); // Clear LifeUp spawn interval
             if (reloadTimeoutId.current) clearTimeout(reloadTimeoutId.current);
+            if (backgroundChangeInterval.current) clearInterval(backgroundChangeInterval.current); // Clear background change interval
+            if (backgroundFadeTimeout.current) clearTimeout(backgroundFadeTimeout.current); // Clear background fade timeout
             const ih = inputHandlerRef.current;
             if (ih) {
                 ih.canvas.removeEventListener('mousedown', ih.boundHandleMouseDown);
@@ -471,26 +505,9 @@ const GameCanvas = () => {
                 ih.canvas.removeEventListener('touchmove', ih.boundHandleTouchMove);
             }
         };
-    }, [gameStarted, gameLoop, currentScreen]); // Added currentScreen to dependencies
+    }, [gameActive, gameLoop, currentScreen]); // Depend on gameActive, gameLoop, currentScreen
 
-    // Effect to synchronize local currentScreen state with gameState.currentScreen
-    useEffect(() => {
-        const handleScreenChange = () => {
-            setCurrentScreen(gameState.currentScreen);
-        };
 
-        // Since gameState is a singleton, we can't directly subscribe to its changes
-        // without modifying gameState to emit events.
-        // For now, we'll rely on the gameLoop to update currentScreen,
-        // but for immediate UI updates, we need to ensure the state is set.
-        // The issue is likely that the gameLoop isn't running when on the title screen,
-        // so setCurrentScreen isn't being called.
-
-        // A more robust solution would involve a state management pattern
-        // where gameState changes trigger React component updates more directly.
-        // For this immediate fix, we'll ensure startIntro and startGame
-        // also explicitly update the local currentScreen state.
-    }, []); // Empty dependency array means this runs once on mount
 
     return (
         <div style={{ border: '1px solid black', margin: 'auto', position: 'relative', width: '100%', height: '100%' }}>
