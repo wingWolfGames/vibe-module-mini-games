@@ -1,6 +1,6 @@
 class GameState {
     constructor() {
-        this.playerLives = 5;
+        this.playerLives = 10;
         this.playerAmmo = 6;
         this.score = 0;
         this.gameOver = false;
@@ -22,7 +22,7 @@ class GameState {
     }
 
     reset() {
-        this.playerLives = 5; // Increased lives as per user request
+        this.playerLives = 10; // Set to max lives as per user request
         this.playerAmmo = 6;
         this.score = 0;
         this.gameOver = false;

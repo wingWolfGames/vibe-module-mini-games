@@ -34,7 +34,16 @@ const GameUI = ({
                 borderRadius: '5px',
                 zIndex: 100
             }}>
-                <p style={{ margin: '0', fontSize: '1em' }}>Lives: {lives}</p>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                    {Array.from({ length: lives }).map((_, index) => (
+                        <img
+                            key={index}
+                            src="/heart/heart.png"
+                            alt="Life"
+                            style={{ width: '16px', height: '16px' }}
+                        />
+                    ))}
+                </div>
             </div>
 
             <div style={{
