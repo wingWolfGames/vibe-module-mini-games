@@ -1,6 +1,8 @@
 import React from 'react';
+import Image from 'next/image';
 import TitleScreen from '../../components/TitleScreen';
 import IntroScreen from '../../components/IntroScreen';
+import { getAssetPath } from '../../lib/utils';
 
 const GameUI = ({
     lives,
@@ -36,10 +38,12 @@ const GameUI = ({
             }}>
                 <div style={{ display: 'flex', gap: '5px' }}>
                     {Array.from({ length: lives }).map((_, index) => (
-                        <img
+                        <Image
                             key={index}
-                            src="/heart/heart.png"
+                            src={getAssetPath('/heart/heart.png')}
                             alt="Life"
+                            width={16}
+                            height={16}
                             style={{ width: '16px', height: '16px' }}
                         />
                     ))}

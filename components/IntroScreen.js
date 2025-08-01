@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAssetPath } from '../lib/utils';
 
 const IntroScreen = ({ onNext }) => {
     const lines = [
@@ -41,7 +42,7 @@ const IntroScreen = ({ onNext }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundImage: `url('/backgrounds/HUB5_BG_v04.gif')`,
+            backgroundImage: `url(${getAssetPath('/backgrounds/HUB5_BG_v04.gif')})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
