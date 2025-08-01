@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 
 const IntroScreen = ({ onNext }) => {
     const lines = [
-        "Shoot Suspects!",
-        "Protect Victims and Witnesses!!",
-        "Defeat the Mastermind!!!"
+        "Line1!",
+        "Line2!!",
+        "Line3!!!"
     ];
     const [displayedText, setDisplayedText] = useState('');
     const [lineIndex, setLineIndex] = useState(0);
