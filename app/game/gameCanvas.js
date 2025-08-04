@@ -184,8 +184,8 @@ const GameCanvas = () => {
                             frame.y,
                             badGuy.frameWidth,
                             badGuy.frameHeight,
-                            badGuy.x,
-                            badGuy.y + newHeight,
+                            badGuy.x - 5,
+                            badGuy.y + newHeight - 5,
                             80, // Destination width
                             80  // Destination height
                         );
@@ -218,7 +218,7 @@ const GameCanvas = () => {
                             goodGuy.frameWidth,
                             goodGuy.frameHeight,
                             goodGuy.x,
-                            goodGuy.y + goodGuy.height, // Position below the head
+                            goodGuy.y + goodGuy.height - 5, // Position below the head
                             80, // Destination width
                             80  // Destination height
                         );
