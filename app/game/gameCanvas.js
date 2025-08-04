@@ -171,7 +171,24 @@ const GameCanvas = () => {
                     }
                     // Draw lower body GIF if loaded
                     if (badGuy.lowerBodyImage && badGuy.lowerBodyImage.complete) {
-                        ctx.drawImage(badGuy.lowerBodyImage, badGuy.x, badGuy.y + newHeight, 80, 80);
+                        const currentTime = performance.now();
+                        if (currentTime - badGuy.lastFrameTime > badGuy.frameRate) {
+                            badGuy.currentFrameIndex = (badGuy.currentFrameIndex + 1) % badGuy.animationFrames.length;
+                            badGuy.lastFrameTime = currentTime;
+                        }
+
+                        const frame = badGuy.animationFrames[badGuy.currentFrameIndex];
+                        ctx.drawImage(
+                            badGuy.lowerBodyImage,
+                            frame.x,
+                            frame.y,
+                            badGuy.frameWidth,
+                            badGuy.frameHeight,
+                            badGuy.x,
+                            badGuy.y + newHeight,
+                            80, // Destination width
+                            80  // Destination height
+                        );
                     }
                 });
                 gameState.goodGuys.forEach(goodGuy => {
@@ -185,12 +202,54 @@ const GameCanvas = () => {
                         ctx.fillStyle = 'blue';
                         ctx.fillRect(goodGuy.x, goodGuy.y, goodGuy.width, goodGuy.height);
                     }
+                    // Draw lower body sprite sheet for GoodGuy
+                    if (goodGuy.lowerBodyImage && goodGuy.lowerBodyImage.complete) {
+                        const currentTime = performance.now();
+                        if (currentTime - goodGuy.lastFrameTime > goodGuy.frameRate) {
+                            goodGuy.currentFrameIndex = (goodGuy.currentFrameIndex + 1) % goodGuy.animationFrames.length;
+                            goodGuy.lastFrameTime = currentTime;
+                        }
+
+                        const frame = goodGuy.animationFrames[goodGuy.currentFrameIndex];
+                        ctx.drawImage(
+                            goodGuy.lowerBodyImage,
+                            frame.x,
+                            frame.y,
+                            goodGuy.frameWidth,
+                            goodGuy.frameHeight,
+                            goodGuy.x,
+                            goodGuy.y + goodGuy.height, // Position below the head
+                            80, // Destination width
+                            80  // Destination height
+                        );
+                    }
                 });
                 gameState.unknownGuys.forEach(unknownGuy => {
                     ctx.beginPath();
                     ctx.arc(unknownGuy.x + unknownGuy.width / 2, unknownGuy.y + unknownGuy.height / 2, 40, 0, Math.PI * 2);
                     ctx.fillStyle = 'gray';
                     ctx.fill();
+                    // Draw lower body sprite sheet for UnknownGuy
+                    if (unknownGuy.lowerBodyImage && unknownGuy.lowerBodyImage.complete) {
+                        const currentTime = performance.now();
+                        if (currentTime - unknownGuy.lastFrameTime > unknownGuy.frameRate) {
+                            unknownGuy.currentFrameIndex = (unknownGuy.currentFrameIndex + 1) % unknownGuy.animationFrames.length;
+                            unknownGuy.lastFrameTime = currentTime;
+                        }
+
+                        const frame = unknownGuy.animationFrames[unknownGuy.currentFrameIndex];
+                        ctx.drawImage(
+                            unknownGuy.lowerBodyImage,
+                            frame.x,
+                            frame.y,
+                            unknownGuy.frameWidth,
+                            unknownGuy.frameHeight,
+                            unknownGuy.x,
+                            unknownGuy.y + 80, // Position below the head (assuming head height is 80)
+                            80, // Destination width
+                            80  // Destination height
+                        );
+                    }
                 });
                 gameState.lifeUps.forEach(lifeUp => {
                     if (loopStateRef.current.lifeUpSprite) {

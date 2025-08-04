@@ -136,12 +136,19 @@ class BadGuy extends Character {
             console.error(`Failed to load BadGuy image ${imagePath}:`, err);
         };
         this.lowerBodyImage = new Image();
-        this.lowerBodyImage.src = 'sprite/bad.gif'; // Corrected path
-        this.lowerBodyImage.onload = () => {
-        };
+        this.lowerBodyImage.src = 'sprite/bad.png'; // New sprite sheet
         this.lowerBodyImage.onerror = (err) => {
-            console.error(`Failed to load BadGuy lower body image sprite/bad.gif:`, err);
+            console.error(`Failed to load BadGuy lower body image sprite/bad.png:`, err);
         };
+        this.frameWidth = 16;
+        this.frameHeight = 16;
+        this.animationFrames = [
+            { x: 0, y: 0 }, { x: 16, y: 0 },
+            { x: 0, y: 16 }, { x: 16, y: 16 }
+        ]; // 2x2 layout, 16x16 px each
+        this.currentFrameIndex = 0;
+        this.lastFrameTime = 0;
+        this.frameRate = 150; // Milliseconds per frame (e.g., 100ms = 10 frames per second)
     }
 
     startFlashing() {
@@ -230,6 +237,20 @@ class GoodGuy extends Character {
         this.image.onerror = (err) => {
             console.error(`Failed to load GoodGuy image ${imagePath}:`, err);
         };
+        this.lowerBodyImage = new Image();
+        this.lowerBodyImage.src = 'sprite/good.png';
+        this.lowerBodyImage.onerror = (err) => {
+            console.error(`Failed to load GoodGuy lower body image sprite/good.png:`, err);
+        };
+        this.frameWidth = 16;
+        this.frameHeight = 16;
+        this.animationFrames = [
+            { x: 0, y: 0 }, { x: 16, y: 0 },
+            { x: 0, y: 16 }, { x: 16, y: 16 }
+        ];
+        this.currentFrameIndex = 0;
+        this.lastFrameTime = 0;
+        this.frameRate = 100; // Same as BadGuy for consistency
     }
 
     update(deltaTime) {
@@ -245,6 +266,20 @@ class UnknownGuy extends Character {
         this.transformed = false;
         this.canStop = true; // UnknownGuy always has stop-and-go behavior
         this.stopDuration = 1000; // Fixed 1 second stop duration for transformation
+        this.lowerBodyImage = new Image();
+        this.lowerBodyImage.src = 'sprite/unknown.png';
+        this.lowerBodyImage.onerror = (err) => {
+            console.error(`Failed to load UnknownGuy lower body image sprite/unknown.png:`, err);
+        };
+        this.frameWidth = 16;
+        this.frameHeight = 16;
+        this.animationFrames = [
+            { x: 0, y: 0 }, { x: 16, y: 0 },
+            { x: 0, y: 16 }, { x: 16, y: 16 }
+        ];
+        this.currentFrameIndex = 0;
+        this.lastFrameTime = 0;
+        this.frameRate = 100; // Same as BadGuy for consistency
     }
 
     update(deltaTime) {
